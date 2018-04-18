@@ -1,0 +1,28 @@
+{
+  "name": "calendar-plugin",
+  "description": "A calendar plugin.",
+  "main": "index.js",
+  "authors": [
+    "Me"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "calendar",
+    "javascript",
+    "jquery",
+    "plugin"
+  ],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.3.1",
+    "bootstrap": "4.0.0"
+  }
+}
