@@ -1,1 +1,3 @@
-### Calendar Plugin
+# Calendar PLUGIN
+
+### Setup instructions
