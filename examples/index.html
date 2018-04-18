@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang='en'>
+    <head>
+        <meta charset='utf-8'/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Calendar Plugin</title>
+        <link rel="stylesheet" href="css/calendar-plugin.min.css" />
+    </head>
+
+    <body>
+
+        <h1 style='text-align: center;'>Calendar PLUGIN</h1>
+        
+        <section id='calendar'>
+            
+        </section>
+
+        <script src="plugins/jquery/jquery.min.js"></script>
+        <script src="plugins/moment/moment.min.js"></script>
+        <script src="js/calendar-plugin.min.js"></script>
+        <script type='text/javascript'>
+            $('#calendar').CalendarPlugin({
+                date: '04/05/2018'
+            });
+        </script>
+    </body>
+</html>
