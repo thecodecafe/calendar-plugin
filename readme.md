@@ -15,4 +15,4 @@
 ### Available Gulp Tasks
 To see the available gulp tasks, simply run `gulp` within the project's directory from your terminal.
 
-### More to come soon.
+### More to come soon...
