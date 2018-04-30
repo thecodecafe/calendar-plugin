@@ -1,1 +1,94 @@
 @import './utils/defaults';
+
+.calendar-plugin-container{
+    position: relative;
+    float: left;
+    width: 100%;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -o-box-sizing: border-box;
+
+    *{
+        box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        -ms-box-sizing: border-box;
+        -o-box-sizing: border-box;
+    }
+
+    .calendar-plugin-header
+    {
+        position: relative;
+        float: left;
+        width: 100%;
+        padding: 0px 80px;
+        display: flex;
+        align-items: center;
+        background-color: $primary-color;
+
+        .calendar-plugin-control-container
+        {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            &.right
+            {
+                left: initial;
+                right: 0;
+            }
+
+            button{
+                display: inline-block;
+                background: rgba(0,0,0,0);
+                border-color: rgba(0,0,0,0);
+                color: #fff;
+                outline: none;
+                cursor: pointer;
+            }
+        }
+
+        .calendar-plugin-month-name
+        {
+            position: relative;
+            float: left;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+        }
+    }
+
+    table.calendar-plugin-calendar
+    {
+        position: relative;
+        float: left;
+        width: 100%;
+
+        tr.calendar-plugin-month-heading
+        {
+            th
+            {
+                text-align: right;
+                padding: 20px 20px;
+                width: (100% / 7);
+            }
+        }
+
+        tr.calendar-plugin-week
+        {
+            td.calendar-plugin-date
+            {
+                padding: 0px 20px !important;
+                text-align: right;
+                width: (100% / 7);
+            }
+        }
+    }
+}

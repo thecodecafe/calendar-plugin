@@ -11,16 +11,17 @@
 
         <h1 style='text-align: center;'>Calendar PLUGIN</h1>
         
-        <section id='calendar'>
-            
-        </section>
+        <div style='position: relative; float: left; width: 100%;'>
+            <section id='calendar'></section>
+        </div>
 
         <script src="plugins/jquery/jquery.min.js"></script>
         <script src="plugins/moment/moment.min.js"></script>
         <script src="js/calendar-plugin.min.js"></script>
         <script type='text/javascript'>
             $('#calendar').CalendarPlugin({
-                date: '04/05/2018'
+                month: 5,
+                year:  2018,
             });
         </script>
     </body>
