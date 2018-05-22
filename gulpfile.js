@@ -39,7 +39,14 @@ const configs = {
         dest: path.join(__dirname, 'dist/css'),
         examples: path.join(__dirname, 'examples/css')
     },
-    "build": path.join(__dirname, "dist/build"),
+    images: {
+        source: [path.join(__dirname, 'images/*.jpg'), path.join(__dirname, 'images/**/*.jpg'),
+                path.join(__dirname, 'images/*.png'), path.join(__dirname, 'images/**/*.png')],
+        watch: [path.join(__dirname, 'images/*.jpg'), path.join(__dirname, 'images/**/*.jpg'),
+                path.join(__dirname, 'images/*.png'), path.join(__dirname, 'images/**/*.png')],
+        dest: path.join(__dirname, 'dist/images'),
+        examples: path.join(__dirname, 'examples/images'),
+    },
     autoprefixer: {
         browsers: [ 'last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4' ]
     }
@@ -89,7 +96,7 @@ gulp.task('sass', function()
         autoprefixer(configs.autoprefixer),
         cssnano(),
         rename(configs.NAME+'.css'),
-        gulp.dest(configs.build),
+        gulp.dest(configs.sass.dest),
         gulp.dest(configs.sass.examples),
         rename(configs.NAME+'.min.css'),
         gulp.dest(configs.sass.dest),
@@ -127,7 +134,7 @@ gulp.task('js', function()
         }),
         sourcemaps.init(),
         concat(configs.NAME+'.js'),
-        gulp.dest(configs.build),
+        gulp.dest(configs.js.dest),
         gulp.dest(configs.js.examples),
         // uglify(),
         rename(configs.NAME+'.min.js'),
@@ -141,6 +148,25 @@ gulp.task('js', function()
 });
 
 /**
+ * images task for js files
+ */
+gulp.task('images', function()
+{
+    var ms = getMs();
+    logStart('images');
+    pump([
+        gulp.src(configs.images.source),
+        plumber(),
+        sourcemaps.init(),
+        gulp.dest(configs.images.dest),
+        gulp.dest(configs.images.examples),
+        gulpFn(function(){
+            logEnd('images', ms, getMs());
+        })
+    ]);
+});
+
+/**
  * watch task
  */
 gulp.task('watch', function()
@@ -149,6 +175,8 @@ gulp.task('watch', function()
     gulp.watch(configs.sass['watch'], ['sass']);
     // watch for changes in javascript files
     gulp.watch(configs.js['watch'], ['js']);
+    // watch for changes in javascript files
+    gulp.watch(configs.images['watch'], ['images']);
 });
 
 /**
@@ -178,6 +206,7 @@ gulp.task('browser_sync', function()
      * file whithin them
      */
 	gulp.watch(configs.js.examples+'/*.js').on('change', configs.BROWSER_SYNC.RELOAD);
+	gulp.watch(configs.images.examples+'/*.*').on('change', configs.BROWSER_SYNC.RELOAD);
 	gulp.watch('examples/plugins/**/*.*').on('change', configs.BROWSER_SYNC.RELOAD);
 	gulp.watch('examples/*.*').on('change', configs.BROWSER_SYNC.RELOAD);
 })
@@ -187,7 +216,7 @@ gulp.task('browser_sync', function()
  * for sass and javascript changes and then finaly start the browser
  * sync server which helps to preview the work.
  */
-gulp.task('start', ['sass', 'js', 'watch', 'browser_sync']);
+gulp.task('start', ['sass', 'js', 'images', 'watch', 'browser_sync']);
 
 /**
  * the available commands within this gulp file

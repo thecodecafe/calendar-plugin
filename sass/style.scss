@@ -23,7 +23,7 @@
         position: relative;
         float: left;
         width: 100%;
-        padding: 0px 80px;
+        padding: 10px 80px;
         display: flex;
         align-items: center;
         background-color: $primary-color;
@@ -31,10 +31,7 @@
         .calendar-plugin-control-container
         {
             position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 80px;
+            left: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -42,16 +39,36 @@
             &.right
             {
                 left: initial;
-                right: 0;
+                right: 15px;
             }
 
             button{
+                width: 50px;
+                height: 50px;
                 display: inline-block;
                 background: rgba(0,0,0,0);
                 border-color: rgba(0,0,0,0);
                 color: #fff;
                 outline: none;
                 cursor: pointer;
+                font-size: 1.3em;
+                // border radius
+                border-radius: 25px;
+                -o-border-radius: 25px;
+                -ms-border-radius: 25px;
+                -moz-border-radius: 25px;
+                -webkit-border-radius: 25px;
+                // transitiion
+                transition: background-color 300ms ease-in-out;
+                -o-transition: background-color 300ms ease-in-out;
+                -ms-transition: background-color 300ms ease-in-out;
+                -moz-transition: background-color 300ms ease-in-out;
+                -webkit-transition: background-color 300ms ease-in-out;
+
+                &:hover
+                {
+                    background-color: rgba(255,255,255,0.2);
+                }
             }
         }
 
@@ -62,6 +79,40 @@
             width: 100%;
             text-align: center;
             color: #fff;
+            font-size: 2em;
+        }
+
+        // seasons customization
+        &.calendar-plugin-header-spring
+        {
+            background-color: $spring;
+        }
+
+        &.calendar-plugin-header-summer
+        {
+            background-color: $summer;
+            .calendar-plugin-control-container
+            {
+
+                button{
+                    color: #333;
+                }
+            }
+
+            .calendar-plugin-month-name
+            {
+                color: #333;
+            }
+        }
+
+        &.calendar-plugin-header-fall
+        {
+            background-color: $fall;
+        }
+
+        &.calendar-plugin-header-winter
+        {
+            background-color: $winter;
         }
     }
 
@@ -70,6 +121,7 @@
         position: relative;
         float: left;
         width: 100%;
+        border-spacing: 0px;
 
         tr.calendar-plugin-month-heading
         {
@@ -88,6 +140,48 @@
                 padding: 0px 20px !important;
                 text-align: right;
                 width: (100% / 7);
+
+            &.calendar-plugin-empty-day
+            {
+                background-image: url('../images/june_bg.jpg');
+                background-repeat: no-repeat;
+            }
+
+            }
+        }
+
+        // season customization
+        &.calendar-plugin-calendar-spring
+        {
+            >thead
+            {
+                background-color: darken($spring, 4%);
+                color: #ffffff;
+            }
+        }
+        &.calendar-plugin-calendar-summer
+        {
+            >thead
+            {
+                background-color: darken($summer, 4%);
+                color: #333;
+            }
+            
+        }
+        &.calendar-plugin-calendar-fall
+        {
+            >thead
+            {
+                background-color: darken($fall, 4%);
+                color: #ffffff;
+            }
+        }
+        &.calendar-plugin-calendar-winter
+        {
+            >thead
+            {
+                background-color: darken($winter, 4%);
+                color: #ffffff;
             }
         }
     }
