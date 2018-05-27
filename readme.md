@@ -1,9 +1,9 @@
 # Calendar PLUGIN
 
 ### Requirements
-1. Node and NPM.
-2. Gulp (globally first and then on the project also `npm install gulp -g` and then `npm install gulp --save-dev`).
-3. Git.
+1. Node and NPM ([install here]:(https://nodejs.org/en/)).
+2. Gulp (you will need to install gulp globally), run `npm install gulp -g` to do so.
+3. Git ([install here]:(https://git-scm.com/downloads)).
 
 ### Dev setup instructions
 1. Clone dev branch `git clone https://github.com/thecodecafe/calendar-plugin --branch=dev`.
