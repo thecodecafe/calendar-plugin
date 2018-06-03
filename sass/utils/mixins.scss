@@ -1,0 +1,53 @@
+@mixin border-radius($border-radius...)
+{
+    border-radius: $border-radius;
+    -o-border-radius: $border-radius;
+    -ms-border-radius: $border-radius;
+    -moz-border-radius: $border-radius;
+    -webkit-border-radius: $border-radius;
+}
+
+@mixin transition($transition...)
+{
+    transition: $transition;
+    -o-transition: $transition;
+    -ms-transition: $transition;
+    -moz-transition: $transition;
+    -webkit-transition: $transition;
+}
+
+@mixin transition-delay($transition-delay...)
+{
+    transition-delay: $transition-delay;
+    -o-transition-delay: $transition-delay;
+    -ms-transition-delay: $transition-delay;
+    -moz-transition-delay: $transition-delay;
+    -webkit-transition-delay: $transition-delay;
+}
+
+@mixin box-shadow($box-shadow...)
+{
+    box-shadow: $box-shadow;
+    -o-box-shadow: $box-shadow;
+    -ms-box-shadow: $box-shadow;
+    -moz-box-shadow: $box-shadow;
+    -webkit-box-shadow: $box-shadow;
+}
+
+@mixin transform($transform...)
+{
+    transform: $transform;
+    -o-transform: $transform;
+    -ms-transform: $transform;
+    -moz-transform: $transform;
+    -webkit-transform: $transform;
+}
+
+@mixin transform-origin($transform-origin...)
+{
+    transform-origin: $transform-origin;
+    -o-transform-origin: $transform-origin;
+    -ms-transform-origin: $transform-origin;
+    -moz-transform-origin: $transform-origin;
+    -webkit-transform-origin: $transform-origin;
+}

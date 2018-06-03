@@ -14,7 +14,9 @@ sourcemaps = require('gulp-sourcemaps'),
 babel = require('gulp-babel'),
 plumber = require('gulp-plumber'),
 browserSync = require('browser-sync').create(),
+connect = require('gulp-connect-php'),
 path = require('path');
+
 
 /**
  * here we have the configuration used
@@ -49,6 +51,10 @@ const configs = {
     },
     autoprefixer: {
         browsers: [ 'last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4' ]
+    },
+    PHP_SERVER: {
+        PORT: 8040,
+        PATH: path.join(__dirname, '/examples')
     }
 };
 
@@ -94,10 +100,10 @@ gulp.task('sass', function()
     pump([
         sass(configs.sass['source'], { style: 'expanded', sourcemap:true }),
         autoprefixer(configs.autoprefixer),
-        cssnano(),
         rename(configs.NAME+'.css'),
         gulp.dest(configs.sass.dest),
         gulp.dest(configs.sass.examples),
+        cssnano(),
         rename(configs.NAME+'.min.css'),
         gulp.dest(configs.sass.dest),
         gulp.dest(configs.sass.examples),
@@ -136,7 +142,7 @@ gulp.task('js', function()
         concat(configs.NAME+'.js'),
         gulp.dest(configs.js.dest),
         gulp.dest(configs.js.examples),
-        // uglify(),
+        uglify(),
         rename(configs.NAME+'.min.js'),
         gulp.dest(configs.js.dest),
         gulp.dest(configs.js.examples),
@@ -209,14 +215,27 @@ gulp.task('browser_sync', function()
 	gulp.watch(configs.images.examples+'/*.*').on('change', configs.BROWSER_SYNC.RELOAD);
 	gulp.watch('examples/plugins/**/*.*').on('change', configs.BROWSER_SYNC.RELOAD);
 	gulp.watch('examples/*.*').on('change', configs.BROWSER_SYNC.RELOAD);
-})
+});
+
+/**
+ * this task starts a php server in the background
+ */
+gulp.task('php-server', function(){
+    connect.server({
+        base: configs.PHP_SERVER.PATH,
+        port: configs.PHP_SERVER.PORT,
+        keepalive: true
+    });
+    console.log(configs.PHP_SERVER.PATH);
+    console.log('Running php server on '+chalk.magenta("http://localhost:"+configs.PHP_SERVER.PORT));
+});
 
 /**
  * this will run the sass and javascript tasks and start watching
  * for sass and javascript changes and then finaly start the browser
  * sync server which helps to preview the work.
  */
-gulp.task('start', ['sass', 'js', 'images', 'watch', 'browser_sync']);
+gulp.task('start', ['sass', 'js', 'images', 'watch', 'browser_sync', 'php-server']);
 
 /**
  * the available commands within this gulp file
