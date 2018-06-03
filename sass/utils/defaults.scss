@@ -1,6 +1,23 @@
-$primary-color: #30c39e !default;
+$namespace: 'cp';
+$eventform: $namespace+'-ef';
+$eventnamespace: $namespace+'-ev';
+
+$primary-color : #283593 !default;
+$danger-color  : #e53935 !default;
 
 $spring : #73970f !default;
 $summer : #ffce00 !default;
 $fall   : #f39933 !default;
 $winter : #bac0ce !default;
+
+$date-color             : #333333 !default;
+$date-bg-color          : #ffffff !default;
+$date-border-color      : #eeeeee !default;
+$date-selected-color    : lighten(#B3E5FC, 10%) !default;
+$date-active-bg-color   : $date-border-color !default;
+
+$link-color: $primary-color!default;
+$link-color-hover: lighten($link-color, 20%) !default; 
+
+$link-color-danger: #E64A19!default;
+$link-color-danger-hover: lighten($link-color-danger, 20%) !default; 

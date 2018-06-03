@@ -4,22 +4,42 @@
         <meta charset='utf-8'/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Calendar Plugin</title>
-        <link rel="stylesheet" href="css/calendar-plugin.min.css" />
+        <link rel="stylesheet" href="css/calendar-plugin.min.css" media="all"/>
+        <!-- <link rel="stylesheet" href="plugins/jquery-ui/ui-lightness/jquery-ui.min.css"> -->
+        <link rel="stylesheet" href="plugins/jquery-ui/ui-lightness/theme.css">
+        <link rel="stylesheet" href="plugins/jqueryui-datepicker/datepicker.css">
     </head>
 
     <body>
-
-        <h5 style='text-align: center;'>CALENDAR PLUGIN</h5>
-        
         <div style='position: relative; float: left; width: 100%;'>
             <section id='calendar'></section>
         </div>
 
         <script src="plugins/jquery/jquery.min.js"></script>
-        <script src="plugins/moment/moment.min.js"></script>
-        <script src="js/calendar-plugin.min.js"></script>
+        <!-- <script src="plugins/jquery-ui/jquery-ui.min.js"></script> -->
+        <script src="plugins/jqueryui-datepicker/datepicker.js"></script>
+        <script src="js/calendar-plugin.js"></script>
         <script type='text/javascript'>
-            $('#calendar').CalendarPlugin();
+            $('#calendar').CalendarPlugin({
+                url: 'http://localhost:8040/php/events.php',
+                headers: { },
+                data: { },
+                id: 'id',
+                createRequest: {
+                    title: 'title',
+                    startDate: 'fromDate',
+                    endDate: 'endDate',
+                    startTime: 'startTime',
+                    endTime: 'endTime'
+                },
+                editRequest: {
+                    title: 'title',
+                    startDate: 'fromDate',
+                    endDate: 'endDate',
+                    startTime: 'startTime',
+                    endTime: 'endTime'
+                },
+            });
         </script>
     </body>
 </html>
