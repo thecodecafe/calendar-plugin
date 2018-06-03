@@ -161,7 +161,6 @@
     var CalenderPlugin = new function()
     {
         var self = this;
-        self.moment = new moment;
         self.now = new Date();
         self.selection = [];
         self.modal = null;
@@ -1132,15 +1131,7 @@
 
             if(format == 'pdf')
             {
-                html2canvas(target, {
-                    onrendered: function(canvas) {         
-                        var imgData = canvas.toDataURL(
-                            'image/png');              
-                        var doc = new jsPDF('p', 'mm');
-                        doc.addImage(imgData, 'PNG', 10, 10);
-                        doc.save('sample-file.pdf');
-                    }
-                });
+               
             }
             else if(format == 'docx')
             {

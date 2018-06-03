@@ -101,11 +101,11 @@ class CPEventFormModal
                             "<div class='"+this.PREFIX+"-group'>"+
                                 "<div class='"+this.PREFIX+"-control'>"+
                                     "<label for='start-date'>Start Date</label>"+
-                                    "<input type='text' name='start-date' placeholder='MM/DD/YYYY' />"+
+                                    "<input type='text' name='start-date' placeholder='MM/DD/YYYY' autocomplete='off' />"+
                                 "</div>"+
                                 "<div class='"+this.PREFIX+"-control'>"+
                                     "<label for='end-date'>End Date</label>"+
-                                    "<input type='text' name='end-date' placeholder='MM/DD/YYYY' />"+
+                                    "<input type='text' name='end-date' placeholder='MM/DD/YYYY' autocomplete='off' />"+
                                 "</div>"+
                             "</div>"+
                             "<div class='"+this.PREFIX+"-group'>"+

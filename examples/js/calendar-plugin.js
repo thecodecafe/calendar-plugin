@@ -147,7 +147,6 @@
 
     var CalenderPlugin = new function () {
         var self = this;
-        self.moment = new moment();
         self.now = new Date();
         self.selection = [];
         self.modal = null;
@@ -1054,16 +1053,7 @@
                 target = $('#' + CONTAINER_ID);
 
 
-            if (format == 'pdf') {
-                html2canvas(target, {
-                    onrendered: function onrendered(canvas) {
-                        var imgData = canvas.toDataURL('image/png');
-                        var doc = new jsPDF('p', 'mm');
-                        doc.addImage(imgData, 'PNG', 10, 10);
-                        doc.save('sample-file.pdf');
-                    }
-                });
-            } else if (format == 'docx') {}
+            if (format == 'pdf') {} else if (format == 'docx') {}
         };
     }();
 
@@ -1187,7 +1177,7 @@ var CPEventFormModal = function () {
     }, {
         key: 'html',
         value: function html() {
-            return "<div class='" + this.PREFIX + "-modal'>" + "<div class='" + this.PREFIX + "-backdrop'>&nbsp;</div>" + "<div class='" + this.PREFIX + "-content'>" + "<div class='" + this.PREFIX + "-dialog'>" + "<form action='javascript:;' class='" + this.PREFIX + "-form' method='POST'>" + "<fieldset>" + "<p class='" + this.PREFIX + "-error " + this.PREFIX + "-error-container'></p>" + "<div class='" + this.PREFIX + "-group'>" + "<div class='" + this.PREFIX + "-control'>" + "<input type='text' name='event-title' class='" + this.PREFIX + "-title' placeholder='Event title...' />" + "</div>" + "</div>" + "<div class='" + this.PREFIX + "-group'>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='start-date'>Start Date</label>" + "<input type='text' name='start-date' placeholder='MM/DD/YYYY' />" + "</div>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='end-date'>End Date</label>" + "<input type='text' name='end-date' placeholder='MM/DD/YYYY' />" + "</div>" + "</div>" + "<div class='" + this.PREFIX + "-group'>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='start-time'>Start Time</label>" + "<input type='time' name='start-time' placeholder='hh:mm AM/PM' />" + "</div>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='end-time'>End Time</label>" + "<input type='time' name='end-time' placeholder='hh:mm AM/PM' />" + "</div>" + "</div>" + "<div class='" + this.PREFIX + "-actions'>" + this.delete_button() + "<button type='button' class='" + this.PREFIX + "-button cancel'>Cancel</button>" + "<button type='submit' class='" + this.PREFIX + "-button save'>Save</button>" + "</div>" + "</fieldset>" + "</form>" + "</div>" + "</div>" + "</div>";
+            return "<div class='" + this.PREFIX + "-modal'>" + "<div class='" + this.PREFIX + "-backdrop'>&nbsp;</div>" + "<div class='" + this.PREFIX + "-content'>" + "<div class='" + this.PREFIX + "-dialog'>" + "<form action='javascript:;' class='" + this.PREFIX + "-form' method='POST'>" + "<fieldset>" + "<p class='" + this.PREFIX + "-error " + this.PREFIX + "-error-container'></p>" + "<div class='" + this.PREFIX + "-group'>" + "<div class='" + this.PREFIX + "-control'>" + "<input type='text' name='event-title' class='" + this.PREFIX + "-title' placeholder='Event title...' />" + "</div>" + "</div>" + "<div class='" + this.PREFIX + "-group'>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='start-date'>Start Date</label>" + "<input type='text' name='start-date' placeholder='MM/DD/YYYY' autocomplete='off' />" + "</div>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='end-date'>End Date</label>" + "<input type='text' name='end-date' placeholder='MM/DD/YYYY' autocomplete='off' />" + "</div>" + "</div>" + "<div class='" + this.PREFIX + "-group'>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='start-time'>Start Time</label>" + "<input type='time' name='start-time' placeholder='hh:mm AM/PM' />" + "</div>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='end-time'>End Time</label>" + "<input type='time' name='end-time' placeholder='hh:mm AM/PM' />" + "</div>" + "</div>" + "<div class='" + this.PREFIX + "-actions'>" + this.delete_button() + "<button type='button' class='" + this.PREFIX + "-button cancel'>Cancel</button>" + "<button type='submit' class='" + this.PREFIX + "-button save'>Save</button>" + "</div>" + "</fieldset>" + "</form>" + "</div>" + "</div>" + "</div>";
         }
     }, {
         key: 'listeners',
