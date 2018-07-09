@@ -27,6 +27,7 @@
      * during the lifecycle of the event.
      */
     const CLASSNAMES = {
+        ACTIVE                     : 'active',
         LOADER_SHOW                : 'show-loader',
         CONTAINER                  : PREFIX+'-container',
         CALENDAR                   : PREFIX+'-calendar',
@@ -41,6 +42,8 @@
         HEADER_OPTIONS_BUTTON            : PREFIX+'-header-options-button',
         HEADER_OPTIONS_ABOVE             : PREFIX+'-header-options-above',
         HEADER_OPTIONS_VISIBLE           : PREFIX+'-header-options-visible',
+        NAV_CONTROLS               : PREFIX+'-nav-controls',
+        CONTROLS_CONTAINER         : PREFIX+'-nav',
         MONTH_HEADER               : PREFIX+'-header-{month}',
         SEASON_HEADER              : PREFIX+'-header-{season}',
         DATE_CELL                  : PREFIX+'-date',
@@ -51,7 +54,6 @@
         WEEK_EVENTS                : PREFIX+'-week-events',
         MONTH_HEADING              : PREFIX+'-month-heading',
         MONTH_CELL                 : PREFIX+'-month',
-        CONTROLS_CONTAINER         : PREFIX+'-control-container',
         MONTH_NAME_BUTTON          : PREFIX+'-month-name',
         EMPTY_DAY                  : PREFIX+'-empty-day',
         EMPTY_DAY_BEGINNING        : PREFIX+'-empty-day-beginning',
@@ -62,6 +64,10 @@
         ADD_MENU_BUTTON            : PREFIX+'-add-menu-button',
         ADD_MENU_ABOVE             : PREFIX+'-add-menu-above',
         ADD_MENU_VISIBLE           : PREFIX+'-add-menu-visible',
+        VIEWS_LIST_CONTAINER       : PREFIX+'-view-list-container',
+        VIEWS_LIST                 : PREFIX+'-view-list',
+        VIEWS_ITEM                 : PREFIX+'-view',
+        VIEW_BUTTON                : PREFIX+'-view-button',
         EVENTS_CONTAINER_READY     : 'ready',
     }
 
@@ -84,6 +90,8 @@
         HEADER_OPTIONS_BUTTON            : '.'+PREFIX+'-header-options-button',
         HEADER_OPTIONS_ABOVE             : '.'+PREFIX+'-header-options-above',
         HEADER_OPTIONS_VISIBLE           : '.'+PREFIX+'-header-options-visible',
+        NAV_CONTROLS               : '.'+PREFIX+'-nav-controls',
+        CONTROL_BUTTONS            : 'button.'+PREFIX+'-nav',
         DATE_CELL                  : '.'+PREFIX+'-date',
         DATE_DAY                   : '.'+PREFIX+'-day',
         DATE_SELECTED              : '.'+PREFIX+'-date-selected',
@@ -92,8 +100,6 @@
         WEEK_EVENTS                : '.'+PREFIX+'-week-events',
         MONTH_HEADING              : '.'+PREFIX+'-month-heading',
         MONTH_CELL                 : '.'+PREFIX+'-month',
-        CONTROLS_CONTAINER         : '.'+PREFIX+'-control-container',
-        CONTROL_BUTTONS            : '.'+PREFIX+'-control-container > button',
         MONTH_NAME_BUTTON          : '.'+PREFIX+'-month-name',
         EMPTY_DAY                  : '.'+PREFIX+'-empty-day',
         EMPTY_DAY_BEGINNING        : '.'+PREFIX+'-empty-day-beginning',
@@ -102,12 +108,17 @@
         ADD_MENU_INNER             : '.'+PREFIX+'-add-menu-inner',
         ADD_MENU_BUTTON            : '.'+PREFIX+'-add-menu-button',
         ADD_MENU_BUTTONS_CONTAINER : '.'+PREFIX+'-add-menu-buttons-container',
+        VIEWS_LIST_CONTAINER       : '.'+PREFIX+'-view-list-container',
+        VIEWS_LIST                 : '.'+PREFIX+'-view-list',
+        VIEWS_ITEM                 : '.'+PREFIX+'-view',
+        VIEW_BUTTON                : '.'+PREFIX+'-view-button',
+        VIEW_SELECTOR              : '[data-toggle="calendar-view"]',
         EVENT_FORM_MODAL           : '.'+PREFIX+'-ef-modal',
         EXPORT_BUTTON              : '[data-export="calendar"]',
     }
 
     /**
-     * html templates for all the different parts of the calendar
+     * html month templates for all the different parts of the calendar
      */
     const TEMPLATES = {
         CONTAINER: "<div class='"+CLASSNAMES.CONTAINER+"' id='"+SELECTORS.CONTAINER_ID+"'>{header}{calendar}{event-containers}{add_menu}</div>",
@@ -115,15 +126,28 @@
         DAYS_HEADING: "<tr class='"+CLASSNAMES.MONTH_HEADING+"'> <th>Sun</th> <th>Mon</th> <th>Tue</th> <th>Wed</th> <th>Thur</th> <th>Fri</th> <th>Sat</th> </tr>",
         WEEK_ROW: "<tr class='"+CLASSNAMES.WEEK_ROW+"' data-row='{row}'>{content}</tr>",
         DAY_CELL: "<td class='"+CLASSNAMES.DATE_CELL+" {classnames}' data-date='{date}'><div class='"+CLASSNAMES.DATE_CELL_CONTENT+"'>{content}</div></td>",
-        HEADER: "<div class='"+CLASSNAMES.HEADER+" {classnames}'>{left-control}"+
+        HEADER: "<div class='"+CLASSNAMES.HEADER+" {classnames}'>"+
+                    "<div class='"+CLASSNAMES.NAV_CONTROLS+"'>{left-control}{right-control}</div>"+
                     "<div class='"+CLASSNAMES.HEADER_CONTENT+"'>"+
                         "<div class='"+CLASSNAMES.HEADER_OPTIONS_CONTAINER+"'>"+
                             "<button class='"+CLASSNAMES.MONTH_NAME_BUTTON+"'>{month}<span class='caret'></span></button>"+
                             "<div class='"+CLASSNAMES.HEADER_OPTIONS+"' id='headerOptionsComponent'><div class='"+CLASSNAMES.HEADER_OPTIONS_INNER+"'><div class='"+CLASSNAMES.HEADER_OPTIONS_BUTTONS_CONTAINER+"'><a class='"+CLASSNAMES.HEADER_OPTIONS_BUTTON+"' href='javascript:;' data-export='calendar' data-format='pdf'>Export to .pdf</a><a class='"+CLASSNAMES.HEADER_OPTIONS_BUTTON+"' href='javascript:;' data-export='calendar' data-format='docx'>Export to .docx</a></div><span class='caret'></span></div></div>"+
                         "</div>"+
                     "</div>"+
-                "{right-control}</div>",
-        CONTROL: "<div class='"+CLASSNAMES.CONTROLS_CONTAINER+" {position}'><button class='' type='submit' {direction}>{label}</button></div>",
+                    "{view-options}"+
+                "</div>",
+        VIEWS: "<div class='"+CLASSNAMES.VIEWS_LIST_CONTAINER+"'><ul class='"+CLASSNAMES.VIEWS_LIST+"'>"+
+                    "<li class='"+CLASSNAMES.VIEWS_ITEM+"'>"+
+                        "<button type='button' class='"+CLASSNAMES.VIEW_BUTTON+" daily' data-toggle='calendar-view' data-option='daily'>Daily</button>"+
+                    "</li>"+
+                    "<li class='"+CLASSNAMES.VIEWS_ITEM+"'>"+
+                        "<button type='button' class='"+CLASSNAMES.VIEW_BUTTON+" weekly' data-toggle='calendar-view' data-option='weekly'>Weekly</button>"+
+                    "</li>"+
+                    "<li class='"+CLASSNAMES.VIEWS_ITEM+"'>"+
+                        "<button type='button' class='"+CLASSNAMES.VIEW_BUTTON+" monthly' data-toggle='calendar-view' data-option='monthly'>Monthly</button>"+
+                    "</li>"+
+                "</ul></div>",
+        CONTROL: "<button class='"+CLASSNAMES.CONTROLS_CONTAINER+"' type='submit' {direction}>{label}</button>",
         ADD_MENU: "<div class='"+CLASSNAMES.ADD_MENU_CONTAINER+"' id='addMenuComponent'><div class='"+CLASSNAMES.ADD_MENU_INNER+"'><div class='"+CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER+"'><button class='"+CLASSNAMES.ADD_MENU_BUTTON+"' type='button' data-action='add-event'>Add Event</button><button class='"+CLASSNAMES.ADD_MENU_BUTTON+" cancel' data-action='cancel' type='button'>Cancel</button></div><span class='caret'></span></div></div>",
         EVENTS_CONTAINER: "<div class='"+CLASSNAMES.WEEK_EVENTS+"' data-row='{row}'></div>"
     };
@@ -167,6 +191,9 @@
         self.editModal = null;
         self.events = [];
         self.eventInstances = [];
+        self.viewOptions = ['daily', 'weekly', 'monthly'];
+        var weekStart = 1;
+        var weekEnd = 7;
 
         // plugin settings
         self.settings = {};
@@ -189,7 +216,9 @@
                 startTime: 'startTime',
                 endTime:   'endTime',
                 creatRequest: null,
-                editRequest: null
+                editRequest: null,
+                view: 'monthly',
+                hideViewOptions: false 
             }, options);
 
             // configure seasons
@@ -240,21 +269,113 @@
 
         const render = function()
         {
-            if($(self.el).find(SELECTORS.CONTAINER).length > 0)
+            var html = '';
+            switch(self.settings.view)
             {
+                case 'daily':
+                    html = create_view( create_calendar() );
+                break;
+                case 'weekly':
+                    html = weekly_calendar();
+                break;
+                case 'monthly':
+                    html = create_view( create_calendar() );
+                break;
+            }
+
+            if($(self.el).find(SELECTORS.CONTAINER).length > 0){
                 $(self.el).find(SELECTORS.CONTAINER).fadeOut(200, function(){
                     $(self.el).html('');
-                    $(create_view( create_calendar() )).hide().prependTo($(self.el)).fadeIn(200, function(){
+                    $( html ).hide().prependTo($(self.el)).fadeIn(200, function(){
                         refresh_calendar_events();
                     }).call(start);
                 });
             }
-            else
-            {
-                $(create_view( create_calendar() )).hide().prependTo($(self.el)).fadeIn(200, function(){
+            else{
+                $( html ).hide().prependTo($(self.el)).fadeIn(200, function(){
                     refresh_calendar_events();
                 }).call(start);
             }
+        }
+
+        const weekly_calendar = function(){
+            return "<div class='"+CLASSNAMES.CONTAINER+"' id='"+SELECTORS.CONTAINER_ID+"'>"+
+                render_header('weekly')+
+                "<table class='"+CLASSNAMES.CALENDAR+" {classnames}'  cellspacing='0' cellpadding='0'>"+
+                    "<thead>{heading}</thead>"+
+                    "<tbody>{content}</tbody>"+
+                "</table>"+
+                render_add_menu()+
+            "</div>";
+        }
+
+        const render_header = function(type){
+
+            var month_name = get_month_name(self.settings.month - 1);
+            var headerClassnames = '';
+            headerClassnames += ' '+ CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(self.settings.month - 1).toLowerCase())+' ';
+            headerClassnames += ' '+ CLASSNAMES.SEASON_HEADER.replace('{season}', get_season() ? get_season().name : '')+' ';
+
+            // create view specific name
+            if(type == 'weekly'){
+                month_name+= ' '+leading_zero(weekStart)+' - ';
+                month_name+= (weekStart > weekEnd) ? get_month_name(self.settings.month)+' '+leading_zero(weekEnd) : leading_zero(weekEnd) ;
+            }
+
+            return "<div class='"+CLASSNAMES.HEADER+" "+headerClassnames+"'>"+
+                "<div class='"+CLASSNAMES.NAV_CONTROLS+"'>"+render_nav_control('left')+render_nav_control('right')+"</div>"+
+                "<div class='"+CLASSNAMES.HEADER_CONTENT+"'>"+
+                    "<div class='"+CLASSNAMES.HEADER_OPTIONS_CONTAINER+"'>"+
+                        "<button class='"+CLASSNAMES.MONTH_NAME_BUTTON+"'>"+month_name+"<span class='caret'></span></button>"+
+                        "<div class='"+CLASSNAMES.HEADER_OPTIONS+"' id='headerOptionsComponent'>"+
+                            "<div class='"+CLASSNAMES.HEADER_OPTIONS_INNER+"'>"+
+                                "<div class='"+CLASSNAMES.HEADER_OPTIONS_BUTTONS_CONTAINER+"'>"+
+                                    "<a class='"+CLASSNAMES.HEADER_OPTIONS_BUTTON+"' href='javascript:;' "+
+                                        "data-export='calendar' data-format='pdf'>Export to .pdf</a>"+
+                                    "<a class='"+CLASSNAMES.HEADER_OPTIONS_BUTTON+"' href='javascript:;' "+
+                                        "data-export='calendar' data-format='docx'>Export to .docx</a>"+
+                                "</div>"+
+                                "<span class='caret'></span>"+
+                            "</div>"+
+                        "</div>"+
+                    "</div>"+
+                "</div>"+
+                render_view_options()+
+            "</div>"
+        }
+
+        const render_nav_control = function(direction){
+            var label = direction == 'right' ? '&rarr;' : '&larr;';
+            return "<button class='"+CLASSNAMES.CONTROLS_CONTAINER+"' "+
+                        "type='submit' "+direction+">"+label+"</button>";
+        }
+
+        const render_view_options = function(){
+            return "<div class='"+CLASSNAMES.VIEWS_LIST_CONTAINER+"'><ul class='"+CLASSNAMES.VIEWS_LIST+"'>"+
+                "<li class='"+CLASSNAMES.VIEWS_ITEM+"'>"+
+                    "<button type='button' class='"+CLASSNAMES.VIEW_BUTTON+" daily' data-toggle='calendar-view' data-option='daily'>Day</button>"+
+                "</li>"+
+                "<li class='"+CLASSNAMES.VIEWS_ITEM+"'>"+
+                    "<button type='button' class='"+CLASSNAMES.VIEW_BUTTON+" weekly' data-toggle='calendar-view' data-option='weekly'>Week</button>"+
+                "</li>"+
+                "<li class='"+CLASSNAMES.VIEWS_ITEM+"'>"+
+                    "<button type='button' class='"+CLASSNAMES.VIEW_BUTTON+" monthly' data-toggle='calendar-view' data-option='monthly'>Month</button>"+
+                "</li>"+
+            "</ul></div>";
+        }
+
+        const render_add_menu = function(){
+            return "<div class='"+CLASSNAMES.ADD_MENU_CONTAINER+"' id='addMenuComponent'>"+
+                "<div class='"+CLASSNAMES.ADD_MENU_INNER+"'>"+
+                    "<div class='"+CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER+"'>"+
+                        "<button class='"+CLASSNAMES.ADD_MENU_BUTTON+"' type='button' data-action='add-event'>"+
+                        "Add Event</button>"+
+                        "<button class='"+CLASSNAMES.ADD_MENU_BUTTON+" cancel' data-action='cancel' type='button'>"+
+                        "Cancel</button>"+
+                    "</div>"+
+                    "<span class='caret'></span>"+
+                "</div>"+
+            "</div>";
         }
 
         const render_events = function()
@@ -319,7 +440,6 @@
             $(window).off('resize', reposition_cell_background);
             $(window).on('resize', reposition_cell_background);
 
-
             // reposition events and event containers when window resizes
             $(window).off('resize', reposition_event_containers);
             $(window).on('resize', reposition_event_containers);
@@ -341,19 +461,22 @@
             // update calendar with selection
             update_Selection();
 
+            // select active view
+            select_active_view();
+
+            // listen for view select
+            listen_view_select();
         }
 
         const create_view = function(calendar)
         {
             var container_tpl = copy_var(TEMPLATES.CONTAINER);
-            var header_tpl = copy_var(TEMPLATES.HEADER);
             var calendar_tpl = copy_var(TEMPLATES.MAIN);
             var days_heading_tpl = copy_var(TEMPLATES.DAYS_HEADING);
             var cell_tpl = copy_var(TEMPLATES.DAY_CELL);
             var week_tpl = copy_var(TEMPLATES.WEEK_ROW);
             var ev_container_tpl = copy_var(TEMPLATES.EVENTS_CONTAINER);
-            var left_control = copy_var(TEMPLATES.CONTROL);
-            var right_control = copy_var(TEMPLATES.CONTROL);
+            var view_options = !self.settings.hideViewOptions ? copy_var(TEMPLATES.VIEWS) : '';
             var add_menu = copy_var(TEMPLATES.ADD_MENU);
             var month_name = get_month_name(self.settings.month - 1);
             var season = get_season();
@@ -428,32 +551,14 @@
             calendar_tpl = calendar_tpl.replace('{heading}', days_heading_tpl);
             calendar_tpl = calendar_tpl.replace('{classnames}', calenderClassnames);
 
-            // create controls
-            left_control = left_control.replace('{label}', '&larr;');
-            left_control = left_control.replace('{position}', '');
-            left_control = left_control.replace('{direction}', 'left');
-            right_control = right_control.replace('{label}', '&rarr;');
-            right_control = right_control.replace('{position}', 'right');
-            right_control = right_control.replace('{direction}', 'right');
-
-            // create calendar header from template
-            var headerClassnames = '';
-            headerClassnames += ' '+ CLASSNAMES.MONTH_HEADER.replace('{month}', month_name.toLowerCase())+' ';
-            headerClassnames += ' '+ CLASSNAMES.SEASON_HEADER.replace('{season}', season ? season.name : '')+' ';
-            header_tpl = header_tpl.replace('{left-control}', left_control);
-            header_tpl = header_tpl.replace('{right-control}', right_control);
-            header_tpl = header_tpl.replace('{month}', month_name+' '+self.settings.year);
-            header_tpl = header_tpl.replace('{classnames}', headerClassnames);
-            
-
             // add header to calendar
-            container_tpl = container_tpl.replace('{header}', header_tpl);
+            container_tpl = container_tpl.replace('{header}', render_header());
             // add calender to container
             container_tpl = container_tpl.replace('{calendar}', calendar_tpl);
             // add event containers
             container_tpl = container_tpl.replace('{event-containers}', event_containers);
             // add, add menu
-            container_tpl = container_tpl.replace('{add_menu}', add_menu);
+            container_tpl = container_tpl.replace('{add_menu}', render_add_menu());
 
             // return generated calendar
             return container_tpl;
@@ -587,7 +692,7 @@
             }
 
             // update object settings
-            self.settings = $.extend(self.settings, settings);
+            self.settings = $.extend({}, self.settings, settings);
 
             // rerender calendar
             launch()
@@ -1137,6 +1242,49 @@
             {
                 
             }
+        }
+
+        const listen_view_select = function(){
+            $(SELECTORS.VIEW_SELECTOR).off('click', handle_view_select);
+            $(SELECTORS.VIEW_SELECTOR).on('click', handle_view_select);
+        }
+
+        const handle_view_select = function(ev){
+            var el = $(ev.currentTarget);
+            var option = el.attr('data-option');
+            if(self.viewOptions.indexOf(option) == -1){
+                option = 'monthly';
+            }
+            if(self.settings.view != option){
+                self.settings = $.extend({}, self.settings, {
+                    view: option
+                });
+                // rerender calendar
+                setTimeout(launch, 200);
+            }
+        }
+
+        const select_active_view = function(){
+            var { VIEWS_LIST_CONTAINER } = SELECTORS;
+
+            var option = $(VIEWS_LIST_CONTAINER).find("[data-option='"+self.settings.view+"']");
+
+            if(option.length > 0)
+            {
+                if(!option.hasClass(CLASSNAMES.ACTIVE))
+                {
+                    $(VIEWS_LIST_CONTAINER).find("[data-toggle='calendar-view']").removeClass(CLASSNAMES.ACTIVE);
+                    option.addClass(CLASSNAMES.ACTIVE);
+                }
+            }
+        }
+
+        const leading_zero = function(number){
+            if(typeof number == 'number')
+            {
+                number = number.toString();
+            }
+            return number.trim().length >= 2 ? number : '0'+number;
         }
     }
 

@@ -1,6 +1,6 @@
 // Load packages
 var gulp = require('gulp'),
-sass = require('gulp-ruby-sass'),
+sass = require('gulp-sass'),
 autoprefixer = require('gulp-autoprefixer'),
 concat = require('gulp-concat'),
 cssnano = require('gulp-cssnano'),
@@ -98,7 +98,10 @@ gulp.task('sass', function()
     var ms = getMs();
     logStart('sass');
     pump([
-        sass(configs.sass['source'], { style: 'expanded', sourcemap:true }),
+        gulp.src(configs.sass['source']),
+        sourcemaps.init(),
+        sass().on('error', sass.logError),
+        sourcemaps.write(),
         autoprefixer(configs.autoprefixer),
         rename(configs.NAME+'.css'),
         gulp.dest(configs.sass.dest),

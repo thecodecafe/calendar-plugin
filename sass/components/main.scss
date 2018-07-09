@@ -16,88 +16,74 @@
         -o-box-sizing: border-box;
     }
 
-    .#{$namespace}-header
-    {
+    .#{$namespace}-header{
         position: relative;
         float: left;
         width: 100%;
-        padding: 0px 80px;
+        padding: 40px 30px 20px;
         background-color: $primary-color;
 
-        .#{$namespace}-control-container
-        {
-            position: absolute;
-            left: 15px;
-            height: 100%;
+        .#{$namespace}-nav-controls{
+            position: relative;
+            float: left;
+            width: 100%;
             display: flex;
             align-items: center;
-            justify-content: center;
-
-            &.right
-            {
-                left: initial;
-                right: 15px;
-            }
-
-            button{
-                width: 50px;
-                height: 50px;
+            margin-bottom: 15px;
+    
+            button.#{$namespace}-nav{
+                width: 35px;
+                height: 35px;
+                margin: 0px 5px;
                 display: inline-block;
                 background: rgba(0,0,0,0);
                 border-color: rgba(0,0,0,0);
                 color: #fff;
                 outline: none;
                 cursor: pointer;
-                font-size: 1.3em;
-                @include border-radius(25px);
+                font-size: 1em;
+                @include border-radius(5px);
                 @include transition(background-color 300ms ease-in-out);
+                background-color: rgba(255,255,255,0.1);
 
-                &:hover
-                {
-                    background-color: rgba(255,255,255,0.3);
+                &:last-child{
+                    margin-right: 0px;
+                }
+
+                &:first-child{
+                    margin-left: 0px;
+                }
+
+                &:hover{
                 }
             }
         }
 
-        .#{$namespace}-header-content
-        {
+        .#{$namespace}-header-content{
             position: relative;
             float: left;
             width: 100%;
-            padding: 10px 0px;
-            display: flex;
-            align-items: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            margin-bottom: 15px;
 
-            .#{$namespace}-header-options-container
-            { 
+            .#{$namespace}-header-options-container{ 
                 position: relative;
                 float: left;
-                margin: 20px 0px;
+                margin: 0px 0px;
 
-                .#{$namespace}-month-name
-                {   
+                .#{$namespace}-month-name{   
                     background-color: rgba(255,255,255,0);
                     border: none;
-                    padding: 10px 25px;
-                    margin: 0px 0px;
                     color: #fff;
-                    font-size: 1.3em;
+                    font-size: 1em;
+                    padding: 0px 0px;
                     text-transform: uppercase;
                     outline: none !important;
-                    @include border-radius(5px);
-                    @include transition(background-color 300ms ease-in-out);
         
-                    &:hover
-                    {
+                    &:hover{
                         cursor: pointer;
-                        background-color: rgba(255,255,255,0.2);
                     }
         
-                    .caret
-                    {
+                    .caret{
                         margin-left: 5px;
                         display: inline-block;
                         border-top: solid 6px rgba(255, 255, 255, 1);     
@@ -106,10 +92,9 @@
                         border-right: solid 6px rgba(255, 255, 255, 0);    
                         display: none; 
                     }
-                }  
+                }
                 
-                .#{$namespace}-header-options
-                {
+                .#{$namespace}-header-options{
                     position: absolute;
                     left: 0;
                     top: 100%;
@@ -124,8 +109,7 @@
                                         opacity 600ms ease-in-out, 
                                         visibility 600ms ease-in-out);
 
-                    .#{$namespace}-header-options-inner
-                    {
+                    .#{$namespace}-header-options-inner{
                         position: relative;
                         float: left;
                         display: flex;
@@ -134,8 +118,7 @@
                         justify-content: center;
                         flex-direction: column-reverse;
 
-                        .#{$namespace}-header-options-buttons-container
-                        {
+                        .#{$namespace}-header-options-buttons-container{
                             position: relative;
                             float: left;
                             width: 100%;
@@ -143,8 +126,7 @@
                             @include box-shadow(0px 0px 3px rgba(0,0,0, 0.3));
                             overflow: hidden;
 
-                            .#{$namespace}-header-options-button
-                            {
+                            .#{$namespace}-header-options-button{
                                 display: inline-block;
                                 background-color: #ffffff;
                                 border: 0px;
@@ -157,23 +139,19 @@
                                 outline: none;
                                 border-bottom: solid 1px #f8f8f8;
 
-                                &:last-child
-                                {
+                                &:last-child{
                                     border-bottom: none;
                                 }
                 
-                                &:hover
-                                {
+                                &:hover{
                                     color: $link-color-hover;
                                     cursor: pointer;
                                 }
 
-                                &.cancel
-                                {
+                                &.cancel{
                                     color: $link-color-danger;
                 
-                                    &:hover
-                                    {
+                                    &:hover{
                                         color: $link-color-danger-hover;
                                         cursor: pointer;
                                     }
@@ -182,15 +160,13 @@
                         }
 
 
-                        .caret
-                        {
+                        .caret{
                             position: relative;
                             float: left;
                             width: 20px;
                             height: 20px;
 
-                            &::before
-                            {
+                            &::before{
                                 position: absolute;
                                 left: 0;
                                 top: 0;
@@ -201,8 +177,7 @@
                                 border-right: solid 10px rgba(0,0,0,0);
                             }
 
-                            &::after
-                            {
+                            &::after{
                                 position: absolute;
                                 left: 0;
                                 top: 2px;
@@ -217,10 +192,8 @@
                     }
                 }
 
-                &:hover
-                {
-                    .#{$namespace}-header-options
-                    {
+                &:hover{
+                    .#{$namespace}-header-options{
                         // visibility: visible;
                         // opacity: 1;
                         // @include transform(scale(1));
@@ -228,6 +201,50 @@
                 }
             }
 
+        }
+
+        .#{$namespace}-view-list-container
+        {
+            position: relative;
+            float: left;
+            width: 100%;
+
+            .#{$namespace}-view-list{
+                position: relative;
+                float: left;
+                list-style: none;
+                padding-left: 0px;
+                margin-bottom: 0px;
+                margin-top: 0px;
+                @include box-shadow(0px 0px 2px #000000);
+                @include border-radius(5px);
+                overflow: hidden;
+
+                >li.#{$namespace}-view{
+                    position: relative;
+                    float: left;
+
+                    >button.#{$namespace}-view-button{
+                        position: relative;
+                        background-color: rgba(0,0,0,0);
+                        border: none;
+                        background-color: $primary-color;
+                        color: #ffffff;
+                        padding: 10px 10px;
+                        border-right: solid 1px darken($primary-color, 3%);
+                        outline: none;
+                        &:hover{
+                            cursor: pointer;
+                        }
+                    }
+
+                    &:last-child{
+                        >button.#{$namespace}-view-button{
+                            border-right: none;
+                        }
+                    }
+                }
+            }
         }
 
         // seasons customization
