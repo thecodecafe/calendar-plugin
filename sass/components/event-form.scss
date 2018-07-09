@@ -1,5 +1,4 @@
-.#{$eventform}-modal
-{
+.#{$eventform}-modal{
     position: fixed;
     left: 0;
     top: 0;
@@ -22,8 +21,7 @@
         -o-box-sizing: border-box;
     }
 
-    .#{$eventform}-backdrop
-    {
+    .#{$eventform}-backdrop{
         position: absolute;
         left: 0;
         top: 0;
@@ -36,23 +34,20 @@
         @include transition-delay(200ms);
     }
 
-    .#{$eventform}-content
-    {
+    .#{$eventform}-content{
         position: relative;
         float: left;
         width: 100%;
         height: 100%;
 
-        .#{$eventform}-dialog
-        {
+        .#{$eventform}-dialog{
             position: relative;
             float: none;
             clear: both;
             margin: 0 auto;
             width: 400px;
 
-            .#{$eventform}-form
-            {
+            .#{$eventform}-form{
                 position: relative;
                 float: left;
                 width: 100%;
@@ -63,8 +58,7 @@
                 opacity: 0;
                 @include transition(transform 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 600ms ease-in-out);
 
-                >fieldset
-                {
+                >fieldset{
                     position: relative;
                     float: left;
                     width: 100%;
@@ -73,8 +67,7 @@
                     padding: 0px 0px;
                 }
 
-                input[type="text"], input[type="date"], input[type="time"]
-                {
+                input[type="text"], input[type="date"], input[type="time"]{
                     position: relative;
                     float: left;
                     width: 100%;
@@ -93,14 +86,12 @@
                     @include transition( border-color 200ms ease-in-out );
                     @include border-radius(0.2rem);
 
-                    &:focus
-                    {
+                    &:focus{
                         border-color: $primary-color;
 
                     }
 
-                    &:disabled
-                    {
+                    &:disabled{
                         opacity: 0.8;
                         background-color: #eeeeee;
                     }
@@ -119,26 +110,22 @@
                     margin-bottom: 10px;
                     display: flex;
 
-                    .#{$eventform}-control
-                    {
+                    .#{$eventform}-control{
                         position: relative;
                         float: left;
                         width: 100%;
                         flex: 1;
                         padding: 0px 10px;
 
-                        &:last-child
-                        {
+                        &:last-child{
                             padding-right: 0;
                         }
 
-                        &:first-child
-                        {
+                        &:first-child{
                             padding-left: 0;
                         }
 
-                        label:first-child
-                        {
+                        label:first-child{
                             font-size: 0.7em;
                             text-transform: uppercase;
                             font-weight: 600;
@@ -147,8 +134,7 @@
                     }
                 }
 
-                .#{$eventform}-actions
-                {
+                .#{$eventform}-actions{
                     position: relative;
                     float: left;
                     width: 100%;
@@ -156,8 +142,7 @@
                     margin-top: 20px;
                     margin-bottom: 20px;
 
-                    button
-                    {
+                    button{
                         display: inline-block;
                         padding: 0.5rem 0.87rem;
                         margin: 0px 5px;
@@ -169,8 +154,7 @@
                         @include transition(background-color 200ms ease-in-out);
                         @include border-radius(0.2rem);
 
-                        &:hover
-                        {
+                        &:hover{
                             cursor: pointer;
                             background-color: darken(#fff, 5%);
 
@@ -185,8 +169,7 @@
                             }
                         }
 
-                        &:disabled
-                        {
+                        &:disabled{
                             opacity: 0.8;
                             background-color: darken(#fff, 5%);
 
@@ -201,30 +184,25 @@
                             }
                         }
 
-                        &:last-child
-                        {
+                        &:last-child{
                             margin-right: 0;
                         }
 
-                        &:first-child
-                        {
+                        &:first-child{
                             margin-left: 0;
                         }
 
-                        &.cancel
-                        {
+                        &.cancel{
 
                         }
 
-                        &.save
-                        {
+                        &.save{
                             background-color: $primary-color;
                             color: #fff;
                             border-color: darken($primary-color, 10%);
                         }
 
-                        &.delete
-                        {
+                        &.delete{
                             float: left;
                             background-color: $danger-color;
                             color: #fff;
@@ -233,8 +211,7 @@
                     }
                 }
 
-                .#{$eventform}-error
-                {
+                .#{$eventform}-error{
                     position: relative;
                     float: left;
                     width: 100%;
@@ -244,8 +221,7 @@
                     padding: 0px 0px 20px;
                     display: none;
 
-                    &.show
-                    {
+                    &.show{
                         display: block;
                     }
                 }
@@ -253,23 +229,18 @@
         }
     }
 
-    &.show
-    {
+    &.show{
         visibility: visible;
 
-        .#{$eventform}-backdrop
-        {
+        .#{$eventform}-backdrop{
             opacity: 1;
             @include transform(scale(1));
             @include transition-delay(0ms);
         }
 
-        .#{$eventform}-content
-        {
-            .#{$eventform}-dialog
-            {
-                .#{$eventform}-form
-                {
+        .#{$eventform}-content{
+            .#{$eventform}-dialog{
+                .#{$eventform}-form{
                     opacity: 1;
                     @include transform(scale(1));
                 }
