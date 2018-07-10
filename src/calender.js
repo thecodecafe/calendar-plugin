@@ -192,8 +192,8 @@
         self.events = [];
         self.eventInstances = [];
         self.viewOptions = ['daily', 'weekly', 'monthly'];
-        var weekStart = 1;
-        var weekEnd = 7;
+        var weekStart = moment();
+        var weekEnd = moment(weekStart).add(6, 'days');
 
         // plugin settings
         self.settings = {};
@@ -301,27 +301,64 @@
         const weekly_calendar = function(){
             return "<div class='"+CLASSNAMES.CONTAINER+"' id='"+SELECTORS.CONTAINER_ID+"'>"+
                 render_header('weekly')+
-                "<table class='"+CLASSNAMES.CALENDAR+" {classnames}'  cellspacing='0' cellpadding='0'>"+
-                    "<thead>{heading}</thead>"+
-                    "<tbody>{content}</tbody>"+
+                "<table class='"+CLASSNAMES.CALENDAR+" {classnames} weekly'  cellspacing='0' cellpadding='0'>"+
+                    "<thead>"+render_weekly_heading()+"</thead>"+
+                    "<tbody>"+render_weekly_body()+"</tbody>"+
                 "</table>"+
                 render_add_menu()+
             "</div>";
         }
 
-        const render_header = function(type){
+        const render_weekly_heading = function()
+        {
+            var heading = '<tr class="'+CLASSNAMES.MONTH_HEADING+'"><th colspan="2" style="width:initial; text-align: right;">Time</th>';
+            for(var i = weekStart.get('time'); i <= weekEnd.get('time'); i = i+86400000)
+            {
+                heading += '<th colspan="1" style="width:initial; text-align: center;">'+moment(i).format('ddd DD')+'</th>';
+            }
+            heading += '</tr>';
+            return heading;
+        }
 
+        const render_weekly_body = function()
+        {
+            var hours = [12, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+                body = '', 
+                time;
+
+            for(var i = 0; i < hours.length; i++){
+                time = leading_zero(hours[i]);
+                time += i > 11 ? ' PM' : ' AM';
+                body += '<tr class="'+CLASSNAMES.WEEK_ROW+' weekly">'+
+                    '<td colspan="2" style="width:initial; text-align: right;">'+time+'</td>'+
+                    '<td colspan="1" style="width:initial; "></td>'+
+                    '<td colspan="1" style="width:initial; "></td>'+
+                    '<td colspan="1" style="width:initial; "></td>'+
+                    '<td colspan="1" style="width:initial; "></td>'+
+                    '<td colspan="1" style="width:initial; "></td>'+
+                    '<td colspan="1" style="width:initial; "></td>'+
+                    '<td colspan="1" style="width:initial; "></td>'+
+                '</tr>';
+            }
+            return body;
+        }
+
+        const render_header = function(type){
             var month_name = get_month_name(self.settings.month - 1);
             var headerClassnames = '';
             headerClassnames += ' '+ CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(self.settings.month - 1).toLowerCase())+' ';
             headerClassnames += ' '+ CLASSNAMES.SEASON_HEADER.replace('{season}', get_season() ? get_season().name : '')+' ';
-
             // create view specific name
             if(type == 'weekly'){
-                month_name+= ' '+leading_zero(weekStart)+' - ';
-                month_name+= (weekStart > weekEnd) ? get_month_name(self.settings.month)+' '+leading_zero(weekEnd) : leading_zero(weekEnd) ;
-            }
+                var month_name = get_month_name(weekStart.get('month'));
+                headerClassnames += ' '+ CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(weekStart.get('month') - 1).toLowerCase())+' ';
 
+                month_name+= ' '+leading_zero(weekStart.get('date'))+' - ';
+                month_name+= (weekEnd.get('month') != weekStart.get('month')) 
+                            ? get_month_name(weekEnd.get('month'))+' '+leading_zero(weekEnd.get('date')) 
+                            :  leading_zero(weekEnd.get('date')) ;
+            }
+            // return html
             return "<div class='"+CLASSNAMES.HEADER+" "+headerClassnames+"'>"+
                 "<div class='"+CLASSNAMES.NAV_CONTROLS+"'>"+render_nav_control('left')+render_nav_control('right')+"</div>"+
                 "<div class='"+CLASSNAMES.HEADER_CONTENT+"'>"+
@@ -674,16 +711,34 @@
             var left = $(el).attr('left');
             var right = $(el).attr('right');
             var settings  = copy_var(self.settings);
+            var direction = left !== undefined ? 'left' : undefined
+                direction = right !== undefined ? 'right' : direction
 
+            // chang month if calendar is in monthly view
+            if(settings.view == 'monthly'){
+                change_month(direction);
+            }
+            // change week if calendar is in week view
+            if(settings.view == 'weekly'){
+                change_week(direction);
+            }
             // determine what direction to go to
-            if(left != undefined)
+            if(settings.view == 'daiky'){
+                change_month(direction);
+            }
+        }
+
+        const change_month = function(direction){
+            var settings  = copy_var(self.settings);
+
+            if(direction == 'left')
             {
                 // set year
                 settings.year = settings.month <= 1 ? settings.year - 1 : settings.year;
                 // set month
                 settings.month = settings.month <= 1 ? settings.month = 12 : settings.month - 1;
             }
-            else if(right != undefined)
+            else if(direction == 'right')
             {
                 // set year
                 settings.year = settings.month >= 12 ? settings.year + 1 : settings.year;
@@ -696,6 +751,18 @@
 
             // rerender calendar
             launch()
+        }
+
+        const change_week = function(direction){
+            var settings  = copy_var(self.settings);
+            if(direction == 'left'){
+                weekStart = moment(weekStart).subtract(8, 'day');
+            } else if(direction == 'right'){
+                weekStart = moment(weekEnd).add(1, 'day');
+            }
+            weekEnd = moment(weekStart).add(6, 'day');
+            // rerender calendar
+            launch();
         }
 
         const handle_add_menu_button_click = function(ev)

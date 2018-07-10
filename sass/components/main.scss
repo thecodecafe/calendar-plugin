@@ -314,60 +314,76 @@
 
         tr.#{$namespace}-week
         {
-            td.#{$namespace}-date
-            {
+            td.#{$namespace}-date{
                 text-align: right;
                 width: (100% / 7);
 
-            &.#{$namespace}-day
-            {
-                background-color: $date-bg-color;
-                border-left: solid 1px $date-border-color;
-                border-bottom: solid 1px $date-border-color;
-                color: $date-color;
-                &:last-child
+                &.#{$namespace}-day
                 {
-                    border-right: solid 1px $date-border-color;
-                }
-                .#{$namespace}-date-content
-                {
-                    position: relative;
-                    float: left;
-                    width: 100%;
-                    padding: 15px 15px !important;
-
-                    &:hover
+                    background-color: $date-bg-color;
+                    border-left: solid 1px $date-border-color;
+                    border-bottom: solid 1px $date-border-color;
+                    color: $date-color;
+                    &:last-child
                     {
-                        cursor: pointer;
-                        background-color: $date-active-bg-color;
+                        border-right: solid 1px $date-border-color;
+                    }
+                    .#{$namespace}-date-content
+                    {
+                        position: relative;
+                        float: left;
+                        width: 100%;
+                        padding: 15px 15px !important;
+
+                        &:hover
+                        {
+                            cursor: pointer;
+                            background-color: $date-active-bg-color;
+                        }
+                    }
+
+                }
+
+                &.#{$namespace}-date-selected
+                {
+                    border-color: $date-selected-color;
+                    &:first-child
+                    {
+                        border-left: solid 1px $date-border-color;
+                    }
+
+                    .#{$namespace}-date-content
+                    {
+                        background-color: $date-selected-color !important;
                     }
                 }
 
-            }
-
-            &.#{$namespace}-date-selected
-            {
-                border-color: $date-selected-color;
-                &:first-child
+                &.#{$namespace}-empty-day
                 {
-                    border-left: solid 1px $date-border-color;
-                }
-
-                .#{$namespace}-date-content
-                {
-                    background-color: $date-selected-color !important;
+                    background-image: url('../images/default_bg.jpg');
+                    background-repeat: no-repeat;
+                    background-size: cover;
+                    border: none;
+                    background-color: $date-border-color;
                 }
             }
 
-            &.#{$namespace}-empty-day
-            {
-                background-image: url('../images/default_bg.jpg');
-                background-repeat: no-repeat;
-                background-size: cover;
-                border: none;
-                background-color: $date-border-color;
-            }
-
+            &.weekly{
+                td{
+                    width: initial;
+                    padding: 15px 15px;
+                    background-color: #ffffff;
+                    border-right: solid 1px #cccccc;
+                    border-bottom: solid 1px #cccccc;
+                    &:first-child{
+                        background-color: $primary-color;
+                        border-bottom-color: $primary-color;
+                        border-right: none;
+                        color: #ffffff;
+                    }
+                    &:last-child{
+                    }
+                }   
             }
         }
 
