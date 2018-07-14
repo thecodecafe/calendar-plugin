@@ -166,8 +166,9 @@
         self.events = [];
         self.eventInstances = [];
         self.viewOptions = ['daily', 'weekly', 'monthly'];
-        var weekStart = 1;
-        var weekEnd = 7;
+        var weekStart = moment();
+        var weekEnd = moment(weekStart).add(6, 'days');
+        var dailyDate = moment();
 
         // plugin settings
         self.settings = {};
@@ -179,7 +180,7 @@
                 month: self.now.getMonth() + 1,
                 year: self.now.getFullYear(),
                 dayStyle: 'short',
-                cellMaxHeigh: 150,
+                cellMaxHeigh: 200,
                 respData: 'data',
                 // reference to event data
                 id: 'id',
@@ -241,7 +242,7 @@
             var html = '';
             switch (self.settings.view) {
                 case 'daily':
-                    html = create_view(create_calendar());
+                    html = daily_calendar();
                     break;
                 case 'weekly':
                     html = weekly_calendar();
@@ -252,36 +253,94 @@
             }
 
             if ($(self.el).find(SELECTORS.CONTAINER).length > 0) {
-                $(self.el).find(SELECTORS.CONTAINER).fadeOut(200, function () {
+                $(self.el).find(SELECTORS.CONTAINER).fadeOut(1, function () {
                     $(self.el).html('');
-                    $(html).hide().prependTo($(self.el)).fadeIn(200, function () {
+                    $(html).hide().prependTo($(self.el)).fadeIn(1, function () {
                         refresh_calendar_events();
                     }).call(start);
                 });
             } else {
-                $(html).hide().prependTo($(self.el)).fadeIn(200, function () {
+                $(html).hide().prependTo($(self.el)).fadeIn(1, function () {
                     refresh_calendar_events();
                 }).call(start);
             }
         };
 
         var weekly_calendar = function weekly_calendar() {
-            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + render_header('weekly') + "<table class='" + CLASSNAMES.CALENDAR + " {classnames}'  cellspacing='0' cellpadding='0'>" + "<thead>{heading}</thead>" + "<tbody>{content}</tbody>" + "</table>" + render_add_menu() + "</div>";
+            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + render_header('weekly') + "<table class='" + CLASSNAMES.CALENDAR + " {classnames} weekly'  cellspacing='0' cellpadding='0'>" + "<thead>" + render_weekly_heading() + "</thead>" + "<tbody>" + render_weekly_body() + "</tbody>" + "</table>" + render_add_menu() + "</div>";
+        };
+
+        var daily_calendar = function daily_calendar() {
+            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + render_header('daily') + "<table class='" + CLASSNAMES.CALENDAR + " {classnames} weekly'  cellspacing='0' cellpadding='0'>" + "<thead>" + render_daily_heading() + "</thead>" + "<tbody>" + render_daily_body() + "</tbody>" + "</table>" + render_add_menu() + "</div>";
+        };
+
+        var render_daily_heading = function render_daily_heading() {
+            var heading = '<tr class="' + CLASSNAMES.MONTH_HEADING + '">' + '<th col-span="0" style="width: initial; text-align: right;">Time</th>' + '<th col-span="10" style="width: initial; text-align: center;">&nbsp;</th>' + '</tr>';
+            return heading;
+        };
+
+        var render_daily_body = function render_daily_body() {
+            var hours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+                body = '',
+                amPm;
+
+            for (var i = 0; i < hours.length; i++) {
+                amPm = i > 12 ? 'PM' : 'AM';
+                body += '<tr class="' + CLASSNAMES.WEEK_ROW + ' daily">\n                            <td col-span="0" style="width: initial; text-align: right; padding-right: 15px;">' + leading_zero(hours[i]) + ' ' + amPm + '</td>\n                            <td col-span="10" style="width: initial;" class="' + CLASSNAMES.DATE_CELL + ' ' + CLASSNAMES.DATE_DAY + '" data-date="' + dailyDate.get('time') + '">\n                                <div class="' + CLASSNAMES.DATE_CELL_CONTENT + '">&nbsp;</div>\n                            </td>\n                        </tr>';
+            }
+            return body;
+        };
+
+        var render_weekly_heading = function render_weekly_heading() {
+            var heading = '<tr class="' + CLASSNAMES.MONTH_HEADING + '"><th style=" text-align: right;">Time</th>';
+            for (var i = weekStart.get('time'); i <= weekEnd.get('time'); i = i + 86400000) {
+                heading += '<th style="text-align: center;">' + moment(i).format('ddd DD') + '</th>';
+            }
+            heading += '</tr>';
+            return heading;
+        };
+
+        var render_weekly_body = function render_weekly_body() {
+            var hours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+                body = '',
+                time,
+                timeDate,
+                amPm;
+
+            for (var i = 0; i < hours.length; i++) {
+                amPm = i > 12 ? 'PM' : 'AM';
+                time = leading_zero(hours[i]) + ' ' + amPm;
+                body += '<tr class="' + CLASSNAMES.WEEK_ROW + ' weekly">' + '<td style=" text-align: right; padding-right: 15px;">' + time + '</td>';
+                for (var j = weekStart.get('time'); j <= weekEnd.get('time'); j = j + 86400000) {
+                    timeDate = moment(moment(j).format('YYYY-MM-DD ') + leading_zero(hours[i]) + ':00:00');
+                    body += '<td class="' + CLASSNAMES.DATE_CELL + ' ' + CLASSNAMES.DATE_DAY + '" data-date="' + timeDate.get('time') + '"><div class="' + CLASSNAMES.DATE_CELL_CONTENT + '">&nbsp;</div></td>';
+                }
+                body += '</tr>';
+            }
+            return body;
         };
 
         var render_header = function render_header(type) {
-
             var month_name = get_month_name(self.settings.month - 1);
             var headerClassnames = '';
             headerClassnames += ' ' + CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(self.settings.month - 1).toLowerCase()) + ' ';
             headerClassnames += ' ' + CLASSNAMES.SEASON_HEADER.replace('{season}', get_season() ? get_season().name : '') + ' ';
-
             // create view specific name
             if (type == 'weekly') {
-                month_name += ' ' + leading_zero(weekStart) + ' - ';
-                month_name += weekStart > weekEnd ? get_month_name(self.settings.month) + ' ' + leading_zero(weekEnd) : leading_zero(weekEnd);
+                var month_name = get_month_name(weekStart.get('month'));
+                headerClassnames += ' ' + CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(weekStart.get('month') - 1).toLowerCase()) + ' ';
+
+                month_name += ' ' + leading_zero(weekStart.get('date')) + ' - ';
+                month_name += weekEnd.get('month') != weekStart.get('month') ? get_month_name(weekEnd.get('month')) + ' ' + leading_zero(weekEnd.get('date')) : leading_zero(weekEnd.get('date'));
             }
 
+            // create view specific name
+            if (type == 'daily') {
+                var month_name = dailyDate.format('Do MMMM YYYY');
+                headerClassnames += ' ' + CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(dailyDate.get('month') - 1).toLowerCase()) + ' ';
+            }
+
+            // return html
             return "<div class='" + CLASSNAMES.HEADER + " " + headerClassnames + "'>" + "<div class='" + CLASSNAMES.NAV_CONTROLS + "'>" + render_nav_control('left') + render_nav_control('right') + "</div>" + "<div class='" + CLASSNAMES.HEADER_CONTENT + "'>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS_CONTAINER + "'>" + "<button class='" + CLASSNAMES.MONTH_NAME_BUTTON + "'>" + month_name + "<span class='caret'></span></button>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS + "' id='headerOptionsComponent'>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS_INNER + "'>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS_BUTTONS_CONTAINER + "'>" + "<a class='" + CLASSNAMES.HEADER_OPTIONS_BUTTON + "' href='javascript:;' " + "data-export='calendar' data-format='pdf'>Export to .pdf</a>" + "<a class='" + CLASSNAMES.HEADER_OPTIONS_BUTTON + "' href='javascript:;' " + "data-export='calendar' data-format='docx'>Export to .docx</a>" + "</div>" + "<span class='caret'></span>" + "</div>" + "</div>" + "</div>" + "</div>" + render_view_options() + "</div>";
         };
 
@@ -298,7 +357,7 @@
             return "<div class='" + CLASSNAMES.ADD_MENU_CONTAINER + "' id='addMenuComponent'>" + "<div class='" + CLASSNAMES.ADD_MENU_INNER + "'>" + "<div class='" + CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER + "'>" + "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + "' type='button' data-action='add-event'>" + "Add Event</button>" + "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + " cancel' data-action='cancel' type='button'>" + "Cancel</button>" + "</div>" + "<span class='caret'></span>" + "</div>" + "</div>";
         };
 
-        var render_events = function render_events() {
+        var render_events_OLD = function render_events_OLD() {
             // destroy old events first
             destroy_events();
 
@@ -322,6 +381,46 @@
                         // console.log(eventsContainer);
                         // console.log('______________');
                         eventObj = new CPEvent(event, eventsContainer, week, DATE_CELL, {
+                            onClick: handle_event_click
+                        });
+                        eventObj.render();
+                        self.eventInstances.push(eventObj);
+                    }
+                }
+            }
+
+            reposition_event_containers();
+        };
+
+        var render_events = function render_events() {
+            // destroy old events first
+            destroy_events();
+
+            var CALENDAR = SELECTORS.CALENDAR,
+                WEEK_ROW = SELECTORS.WEEK_ROW,
+                WEEK_EVENTS = SELECTORS.WEEK_EVENTS,
+                DATE_CELL = SELECTORS.DATE_CELL,
+                DATE_CELL_CONTENT = SELECTORS.DATE_CELL_CONTENT,
+                weeks = $(CALENDAR).find(WEEK_ROW),
+                week,
+                eventsContainer,
+                eventObj,
+                container,
+                containerDate,
+                evStart,
+                evEnd;
+
+            var dateCells = $(CALENDAR).find(DATE_CELL);
+            for (var i = 0; i < dateCells.length; i++) {
+                container = dateCells.eq(i);
+                containerDate = container.attr('data-date');
+                // create instances
+                for (var j = 0; j < self.events.length; j++) {
+                    var event = self.events[j];
+                    evStart = new Date(event.startDate).getTime();
+                    evEnd = new Date(event.endDate).getTime();
+                    if (containerDate >= evStart && containerDate <= evEnd) {
+                        eventObj = new CPEvent(event, container.find(DATE_CELL_CONTENT), week, DATE_CELL, {
                             onClick: handle_event_click
                         });
                         eventObj.render();
@@ -535,8 +634,11 @@
                 DATE_CELL_CONTENT = SELECTORS.DATE_CELL_CONTENT;
 
             var cells = $(CONTAINER + ' ' + CALENDAR + ' ' + WEEK_ROW + ' ' + DATE_CELL);
-            var height = $(cells[0]).outerWidth() > self.settings.cellMaxHeigh ? self.settings.cellMaxHeigh : $(cells[0]).outerWidth();
-            cells.find(DATE_CELL_CONTENT).css({ height: height + 'px' });
+            var height = $(cells[0]).outerWidth() > self.settings.cellMaxHeigh ? self.settings.cellMaxHeigh + 'px' : $(cells[0]).outerWidth() + 'px';
+            if (self.settings.view != 'monthly') {
+                height = 'initial';
+            }
+            cells.find(DATE_CELL_CONTENT).css({ height: height });
             reposition_addmenu();
         };
 
@@ -582,14 +684,32 @@
             var left = $(el).attr('left');
             var right = $(el).attr('right');
             var settings = copy_var(self.settings);
+            var direction = left !== undefined ? 'left' : undefined;
+            direction = right !== undefined ? 'right' : direction;
 
+            // chang month if calendar is in monthly view
+            if (settings.view == 'monthly') {
+                change_month(direction);
+            }
+            // change week if calendar is in week view
+            if (settings.view == 'weekly') {
+                change_week(direction);
+            }
             // determine what direction to go to
-            if (left != undefined) {
+            if (settings.view == 'daily') {
+                change_date(direction);
+            }
+        };
+
+        var change_month = function change_month(direction) {
+            var settings = copy_var(self.settings);
+
+            if (direction == 'left') {
                 // set year
                 settings.year = settings.month <= 1 ? settings.year - 1 : settings.year;
                 // set month
                 settings.month = settings.month <= 1 ? settings.month = 12 : settings.month - 1;
-            } else if (right != undefined) {
+            } else if (direction == 'right') {
                 // set year
                 settings.year = settings.month >= 12 ? settings.year + 1 : settings.year;
                 // set month
@@ -599,6 +719,29 @@
             // update object settings
             self.settings = $.extend({}, self.settings, settings);
 
+            // rerender calendar
+            launch();
+        };
+
+        var change_week = function change_week(direction) {
+            var settings = copy_var(self.settings);
+            if (direction == 'left') {
+                weekStart = moment(weekStart).subtract(8, 'day');
+            } else if (direction == 'right') {
+                weekStart = moment(weekEnd).add(1, 'day');
+            }
+            weekEnd = moment(weekStart).add(6, 'day');
+            // rerender calendar
+            launch();
+        };
+
+        var change_date = function change_date(direction) {
+            var settings = copy_var(self.settings);
+            if (direction == 'left') {
+                dailyDate = moment(dailyDate).subtract(1, 'day');
+            } else if (direction == 'right') {
+                dailyDate = moment(dailyDate).add(1, 'day');
+            }
             // rerender calendar
             launch();
         };
@@ -694,29 +837,31 @@
 
             // get element and date
             var el = ev.currentTarget;
-            var date = $(el).attr('data-date');
-            var start = self.selection.length > 0 ? self.selection[0] : 0;
-            var end = self.selection.length > 1 ? self.selection[1] : start;
-            if (date != undefined) {
-                date = parseInt(date);
-                if (start < 1 || start > 0 && date < start) {
-                    // make start date equal to date
-                    self.selection[0] = date;
-                } else if (date == start && end == start) {
-                    // reset 
-                    self.selection = [];
-                } else if (date == start) {
-                    self.selection = [start];
-                } else {
-                    self.selection[1] = date;
+            if (!$(ev.target).hasClass('cp-ev-event') && !$(ev.target).hasClass('cp-ev-event-label')) {
+                var date = $(el).attr('data-date');
+                var start = self.selection.length > 0 ? self.selection[0] : 0;
+                var end = self.selection.length > 1 ? self.selection[1] : start;
+                if (date != undefined) {
+                    date = parseInt(date);
+                    if (start < 1 || start > 0 && date < start) {
+                        // make start date equal to date
+                        self.selection[0] = date;
+                    } else if (date == start && end == start) {
+                        // reset 
+                        self.selection = [];
+                    } else if (date == start) {
+                        self.selection = [start];
+                    } else {
+                        self.selection[1] = date;
+                    }
                 }
+
+                // update the selected dates on calendar
+                update_Selection();
             }
 
             // listen for click event again
             listen_for_date_select();
-
-            // update the selected dates on calendar
-            update_Selection();
         };
 
         var update_Selection = function update_Selection() {
@@ -948,7 +1093,7 @@
             // select end element if an end date is set
 
             if (end) {
-                end = $(CONTAINER).find(DATE_SELECTED).last();
+                end = $(CONTAINER).find('[data-date="' + end + '"]');
             }
 
             // return end
@@ -1121,6 +1266,8 @@
                 self.settings = $.extend({}, self.settings, {
                     view: option
                 });
+                // remove any selection
+                cancel_selection();
                 // rerender calendar
                 setTimeout(launch, 200);
             }
@@ -1734,7 +1881,8 @@ var CPEvent = function () {
                 EVENT: this.PREFIX + "-event",
                 LABEL: this.PREFIX + "-event-label",
                 START: 'start',
-                END: 'end'
+                END: 'end',
+                HIGHLIGHTED: 'highlighted'
             };
         }
     }]);
@@ -1750,7 +1898,8 @@ var CPEvent = function () {
         this.cellSelector = cellSelector;
         this.event = null;
         this.data = data;
-        this.start = this.options = $.extend({
+        this.start = null;
+        this.options = $.extend({
             onClick: null
         }, options);
 
@@ -1774,7 +1923,7 @@ var CPEvent = function () {
             // reset/set listeners
             this.listeners();
             // reposition event element
-            this.reposition();
+            // this.reposition();
         }
     }, {
         key: 'render',
@@ -1787,7 +1936,7 @@ var CPEvent = function () {
     }, {
         key: 'html',
         value: function html() {
-            return "<button class='" + this.CLASSNAMES().EVENT + "' id='" + this.uniqueID + "' title='" + this.title() + "'>" + "<span class='" + this.CLASSNAMES().LABEL + "'>" + this.data.title + "</span>" + "</button>";
+            return "<button class='" + this.CLASSNAMES().EVENT + "' id='" + this.uniqueID + "' data-evid='" + this.data.id + "' title='" + this.title() + "'>" + "<span class='" + this.CLASSNAMES().LABEL + "'>" + this.data.title + "</span>" + "</button>";
         }
     }, {
         key: 'title',
@@ -1802,6 +1951,12 @@ var CPEvent = function () {
                 this.event.off('click', this.handle_on_click.bind(this));
                 this.event.on('click', this.handle_on_click.bind(this));
             }
+
+            this.event.off('mouseenter', this.handle_on_mouse_enter.bind(this));
+            this.event.on('mouseenter', this.handle_on_mouse_enter.bind(this));
+
+            this.event.off('mouseleave', this.handle_on_mouse_leave.bind(this));
+            this.event.on('mouseleave', this.handle_on_mouse_leave.bind(this));
         }
     }, {
         key: 'handle_on_click',
@@ -1809,17 +1964,34 @@ var CPEvent = function () {
             this.options.onClick(this.data);
         }
     }, {
+        key: 'handle_on_mouse_enter',
+        value: function handle_on_mouse_enter(ev) {
+            var evID = this.event.attr('data-evid');
+            if (evID != undefined) {
+                $('[data-evid="' + evID + '"]').addClass(this.CLASSNAMES().HIGHLIGHTED);
+            }
+        }
+    }, {
+        key: 'handle_on_mouse_leave',
+        value: function handle_on_mouse_leave(ev) {
+            var evID = this.event.attr('data-evid');
+            if (evID != undefined) {
+                $('[data-evid="' + evID + '"]').removeClass(this.CLASSNAMES().HIGHLIGHTED);
+            }
+        }
+    }, {
         key: 'reposition',
         value: function reposition() {
-            this.set_start_end();
-            var startDate = new Date(this.data.startDate);
-            var endDate = new Date(this.data.endDate);
-            var left = this.start.offset().left - this.container.offset().left;
-            if (startDate.getTime() == parseInt(this.start.attr('data-date'))) {
-                left = left + 15;
-            }
-            this.event.css({ marginLeft: left + 'px' });
-            this.resize();
+            // this.set_start_end();
+            // var startDate = new Date(this.data.startDate);
+            // var endDate = new Date(this.data.endDate);
+            // var left = this.container.offset() ? (this.start.offset().left) - this.container.offset().left : 0; 
+            // if(startDate.getTime() == parseInt(this.start.attr('data-date')))
+            // {
+            //     left = left + 15;
+            // }
+            // this.event.css({marginLeft: left+'px'});
+            // this.resize();
         }
     }, {
         key: 'resize',

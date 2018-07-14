@@ -28,7 +28,8 @@ class CPEvent
             EVENT       :   this.PREFIX+"-event",
             LABEL       :   this.PREFIX+"-event-label",
             START       :   'start',
-            END         :   'end'
+            END         :   'end',
+            HIGHLIGHTED :   'highlighted',
         };
     }
 
@@ -42,7 +43,7 @@ class CPEvent
         this.cellSelector = cellSelector;
         this.event = null;
         this.data = data;
-        this.start = 
+        this.start = null;
         this.options = $.extend({
             onClick: null
         }, options);
@@ -66,7 +67,7 @@ class CPEvent
         // reset/set listeners
         this.listeners();
         // reposition event element
-        this.reposition();
+        // this.reposition();
     }
 
     render()
@@ -79,7 +80,7 @@ class CPEvent
 
     html()
     {
-        return "<button class='"+this.CLASSNAMES().EVENT+"' id='"+this.uniqueID+"' title='"+this.title()+"'>"+
+        return "<button class='"+this.CLASSNAMES().EVENT+"' id='"+this.uniqueID+"' data-evid='"+this.data.id+"' title='"+this.title()+"'>"+
                 "<span class='"+this.CLASSNAMES().LABEL+"'>"+this.data.title+"</span>"+
             "</button>";
     }
@@ -97,6 +98,12 @@ class CPEvent
             this.event.off('click', this.handle_on_click.bind(this));
             this.event.on('click', this.handle_on_click.bind(this));
         }
+
+        this.event.off('mouseenter', this.handle_on_mouse_enter.bind(this));
+        this.event.on('mouseenter', this.handle_on_mouse_enter.bind(this));
+
+        this.event.off('mouseleave', this.handle_on_mouse_leave.bind(this));
+        this.event.on('mouseleave', this.handle_on_mouse_leave.bind(this));
     }
 
     handle_on_click(ev)
@@ -104,18 +111,34 @@ class CPEvent
         this.options.onClick(this.data);
     }
 
+    handle_on_mouse_enter(ev)
+    {
+        var evID = this.event.attr('data-evid');
+        if(evID != undefined){
+            $('[data-evid="'+evID+'"]').addClass(this.CLASSNAMES().HIGHLIGHTED);
+        }
+    }
+
+    handle_on_mouse_leave(ev)
+    {
+        var evID = this.event.attr('data-evid');
+        if(evID != undefined){
+            $('[data-evid="'+evID+'"]').removeClass(this.CLASSNAMES().HIGHLIGHTED);
+        }
+    }
+
     reposition()
     {
-        this.set_start_end();
-        var startDate = new Date(this.data.startDate);
-        var endDate = new Date(this.data.endDate);
-        var left = (this.start.offset().left) - this.container.offset().left;
-        if(startDate.getTime() == parseInt(this.start.attr('data-date')))
-        {
-            left = left + 15;
-        }
-        this.event.css({marginLeft: left+'px'});
-        this.resize();
+        // this.set_start_end();
+        // var startDate = new Date(this.data.startDate);
+        // var endDate = new Date(this.data.endDate);
+        // var left = this.container.offset() ? (this.start.offset().left) - this.container.offset().left : 0; 
+        // if(startDate.getTime() == parseInt(this.start.attr('data-date')))
+        // {
+        //     left = left + 15;
+        // }
+        // this.event.css({marginLeft: left+'px'});
+        // this.resize();
     }
 
     resize()

@@ -1,6 +1,7 @@
 .#{$eventnamespace}-event{
     position: relative;
     float: left;
+    width: 100%;
     text-align: left;
     height: 18px;
     overflow: hidden;
@@ -28,6 +29,11 @@
 
     &.end{
         border-right-width: 1px;
+    }
+
+    &.highlighted{
+        background-color: $highlighted-color;
+        border-color: darken($highlighted-color, 5%);
     }
 
     .#{$eventnamespace}-event-label{
