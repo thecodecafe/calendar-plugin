@@ -40,7 +40,7 @@
             'id' => '27',
             'title' => 'Sample event five',
             'startDate' => date('m/02/Y'),
-            'endDate' => date('m/20/Y'),
+            'endDate' => date('m/03/Y'),
             'startTime' => '06:00',
             'endTime' => '12:00',
         ]

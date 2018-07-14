@@ -236,6 +236,9 @@
                         &:hover{
                             cursor: pointer;
                         }
+                        &.active{
+                            background-color: lighten($primary-color, 10%);
+                        }
                     }
 
                     &:last-child{
@@ -368,13 +371,13 @@
                 }
             }
 
-            &.weekly{
+            &.weekly, &.daily{
                 td{
                     width: initial;
-                    padding: 15px 15px;
                     background-color: #ffffff;
                     border-right: solid 1px #cccccc;
                     border-bottom: solid 1px #cccccc;
+                    padding: 0px 0px;
                     &:first-child{
                         background-color: $primary-color;
                         border-bottom-color: $primary-color;
