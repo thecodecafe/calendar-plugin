@@ -789,7 +789,7 @@
                 dailyDate = moment(dailyDate).add(1, 'day');
             }
 
-            if (dailyDate.get('time') < weekStart.get('time') || dailyDate.getTime('time') > weekEnd.get('time')) {
+            if (dailyDate.get('time') < weekStart.get('time') || dailyDate.get('time') > weekEnd.get('time')) {
                 // reset week start
                 weekStart = moment(dailyDate);
                 // reset week end
