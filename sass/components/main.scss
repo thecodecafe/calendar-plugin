@@ -558,6 +558,73 @@
             }
         }
 
+        &.monthly
+        {   
+            display: block;
+            width: 100%;
+
+            >thead, >tbody{
+                display: block;
+                width: 100%;
+                >tr{
+                    display: flex;
+                    >th, >td{
+                        flex: 1;
+                    }
+                }
+            }
+        }
+
+        &.weekly
+        {   
+            display: block;
+            width: 100%;
+            >thead, >tbody{
+                display: block;
+                width: 100%;
+                >tr{
+                    display: flex;
+                    >th, >td{
+                        flex: 1;
+                        &:first-child{
+                            flex: initial;
+                            width: 150px;
+                            text-align: right;
+                            padding: 15px 15px;
+                        }
+                        .cp-date-content{
+                            min-height: 75px;
+                        }
+                    }
+                }
+            }
+        }
+
+        &.daily
+        {   
+            display: block;
+            width: 100%;
+            >thead, >tbody{
+                display: block;
+                width: 100%;
+                >tr{
+                    display: flex;
+                    >th, >td{
+                        flex: 4;
+                        &:first-child{
+                            flex: initial;
+                            width: 150px;
+                            text-align: right;
+                            padding: 15px 15px;
+                        }
+                        .cp-date-content{
+                            min-height: 75px;
+                        }
+                    }
+                }
+            }
+        }
+
         // season customization
         // &.#{$namespace}-calendar-spring
         // {

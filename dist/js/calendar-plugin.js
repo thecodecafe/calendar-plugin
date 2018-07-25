@@ -285,15 +285,15 @@
         };
 
         var weekly_calendar = function weekly_calendar() {
-            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + render_header('weekly') + "<table class='" + CLASSNAMES.CALENDAR + " {classnames} weekly'  cellspacing='0' cellpadding='0'>" + "<thead>" + render_weekly_heading() + "</thead>" + "<tbody>" + render_weekly_body() + "</tbody>" + "</table>" + render_add_menu() + "</div>";
+            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + render_header('weekly') + "<table class='" + CLASSNAMES.CALENDAR + " weekly'  cellspacing='0' cellpadding='0'>" + "<thead>" + render_weekly_heading() + "</thead>" + "<tbody>" + render_weekly_body() + "</tbody>" + "</table>" + render_add_menu() + "</div>";
         };
 
         var daily_calendar = function daily_calendar() {
-            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + render_header('daily') + "<table class='" + CLASSNAMES.CALENDAR + " {classnames} weekly'  cellspacing='0' cellpadding='0'>" + "<thead>" + render_daily_heading() + "</thead>" + "<tbody>" + render_daily_body() + "</tbody>" + "</table>" + render_add_menu() + "</div>";
+            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + render_header('daily') + "<table class='" + CLASSNAMES.CALENDAR + " daily'  cellspacing='0' cellpadding='0'>" + "<thead>" + render_daily_heading() + "</thead>" + "<tbody>" + render_daily_body() + "</tbody>" + "</table>" + render_add_menu() + "</div>";
         };
 
         var render_daily_heading = function render_daily_heading() {
-            var heading = '<tr class="' + CLASSNAMES.MONTH_HEADING + '">' + '<th col-span="0" style="width: initial; text-align: right;">Time</th>' + '<th col-span="10" style="width: initial; text-align: center;"></th>' + '</tr>';
+            var heading = '<tr class="' + CLASSNAMES.MONTH_HEADING + '">' + '<th>Time</th>' + '<th></th>' + '</tr>';
             return heading;
         };
 
@@ -304,15 +304,15 @@
 
             for (var i = 0; i < hours.length; i++) {
                 amPm = i >= 12 ? 'PM' : 'AM';
-                body += '<tr class="' + CLASSNAMES.WEEK_ROW + ' daily">\n                            <td col-span="0" style="width: initial; text-align: right; padding-right: 15px;">' + leading_zero(hours[i]) + ' ' + amPm + '</td>\n                            <td col-span="10" style="width: initial;" class="' + CLASSNAMES.DATE_CELL + ' ' + CLASSNAMES.DATE_DAY + '" data-date="' + moment(dailyDate.format('YYYY-MM-DD ' + leading_zero(hours[i]) + ':00:00')).get('time') + '">\n                                <div class="' + CLASSNAMES.DATE_CELL_CONTENT + '"></div>\n                            </td>\n                        </tr>';
+                body += '<tr class="' + CLASSNAMES.WEEK_ROW + ' daily">\n                            <td>' + leading_zero(hours[i]) + ' ' + amPm + '</td>\n                            <td class="' + CLASSNAMES.DATE_CELL + ' ' + CLASSNAMES.DATE_DAY + '" data-date="' + moment(dailyDate.format('YYYY-MM-DD ' + leading_zero(hours[i]) + ':00:00')).get('time') + '">\n                                <div class="' + CLASSNAMES.DATE_CELL_CONTENT + '"></div>\n                            </td>\n                        </tr>';
             }
             return body;
         };
 
         var render_weekly_heading = function render_weekly_heading() {
-            var heading = '<tr class="' + CLASSNAMES.MONTH_HEADING + '"><th style=" text-align: right;">Time</th>';
+            var heading = '<tr class="' + CLASSNAMES.MONTH_HEADING + '"><th>Time</th>';
             for (var i = weekStart.get('time'); i <= weekEnd.get('time'); i = i + 86400000) {
-                heading += '<th style="text-align: center;">' + moment(i).format('ddd DD') + '</th>';
+                heading += '<th >' + moment(i).format('ddd DD') + '</th>';
             }
             heading += '</tr>';
             return heading;
@@ -374,40 +374,6 @@
         var render_add_menu = function render_add_menu() {
             return "<div class='" + CLASSNAMES.ADD_MENU_CONTAINER + "' id='addMenuComponent'>" + "<div class='" + CLASSNAMES.ADD_MENU_INNER + "'>" + "<div class='" + CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER + "'>" + "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + "' type='button' data-action='add-event'>" + "Add Event</button>" + "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + " cancel' data-action='cancel' type='button'>" + "Cancel</button>" + "</div>" + "<span class='caret'></span>" + "</div>" + "</div>";
         };
-
-        var render_events_OLD = function render_events_OLD() {
-            // destroy old events first
-            destroy_events();
-
-            var CALENDAR = SELECTORS.CALENDAR,
-                WEEK_ROW = SELECTORS.WEEK_ROW,
-                WEEK_EVENTS = SELECTORS.WEEK_EVENTS,
-                DATE_CELL = SELECTORS.DATE_CELL,
-                weeks = $(CALENDAR).find(WEEK_ROW),
-                week,
-                eventsContainer,
-                eventObj;
-
-
-            for (var i = 0; i < self.events.length; i++) {
-                var event = self.events[i];
-                for (var j = 0; j < weeks.length; j++) {
-                    week = weeks.eq(j);
-                    if (is_in_week(week, event)) {
-                        eventsContainer = $(WEEK_EVENTS + '[data-row="' + week.attr('data-row') + '"]');
-                        // console.log(week);
-                        // console.log(eventsContainer);
-                        // console.log('______________');
-                        eventObj = new CPEvent(event, eventsContainer, week, DATE_CELL, {
-                            onClick: handle_event_click
-                        });
-                        eventObj.render();
-                        self.eventInstances.push(eventObj);
-                    }
-                }
-            }
-        };
-
         var render_events = function render_events() {
             // destroy old events first
             destroy_events();
@@ -588,7 +554,7 @@
             }
 
             // create calendar from template
-            var calenderClassnames = '';
+            var calenderClassnames = 'monthly';
             calenderClassnames += ' ' + CLASSNAMES.MONTH_CALENDAR.replace('{month}', month_name.toLowerCase()) + ' ';
             calenderClassnames += ' ' + CLASSNAMES.SEASON_CALENDAR.replace('{season}', season ? season.name : '') + ' ';
             var calendar_tpl = calendar_tpl.replace('{content}', weeks);
