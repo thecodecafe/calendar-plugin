@@ -68,7 +68,6 @@
         VIEWS_LIST                 : PREFIX+'-view-list',
         VIEWS_ITEM                 : PREFIX+'-view',
         VIEW_BUTTON                : PREFIX+'-view-button',
-        EVENTS_CONTAINER_READY     : 'ready',
     }
 
     /**
@@ -121,7 +120,7 @@
      * html month templates for all the different parts of the calendar
      */
     const TEMPLATES = {
-        CONTAINER: "<div class='"+CLASSNAMES.CONTAINER+"' id='"+SELECTORS.CONTAINER_ID+"'>{header}{calendar}{event-containers}{add_menu}</div>",
+        CONTAINER: "<div class='"+CLASSNAMES.CONTAINER+"' id='"+SELECTORS.CONTAINER_ID+"'>{header}{calendar}{add_menu}</div>",
         MAIN: "<table class='"+CLASSNAMES.CALENDAR+" {classnames}'  cellspacing='0' cellpadding='0'><thead>{heading}</thead><tbody>{content}</tbody></table>",
         DAYS_HEADING: "<tr class='"+CLASSNAMES.MONTH_HEADING+"'> <th>Sun</th> <th>Mon</th> <th>Tue</th> <th>Wed</th> <th>Thur</th> <th>Fri</th> <th>Sat</th> </tr>",
         WEEK_ROW: "<tr class='"+CLASSNAMES.WEEK_ROW+"' data-row='{row}'>{content}</tr>",
@@ -149,7 +148,6 @@
                 "</ul></div>",
         CONTROL: "<button class='"+CLASSNAMES.CONTROLS_CONTAINER+"' type='submit' {direction}>{label}</button>",
         ADD_MENU: "<div class='"+CLASSNAMES.ADD_MENU_CONTAINER+"' id='addMenuComponent'><div class='"+CLASSNAMES.ADD_MENU_INNER+"'><div class='"+CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER+"'><button class='"+CLASSNAMES.ADD_MENU_BUTTON+"' type='button' data-action='add-event'>Add Event</button><button class='"+CLASSNAMES.ADD_MENU_BUTTON+" cancel' data-action='cancel' type='button'>Cancel</button></div><span class='caret'></span></div></div>",
-        EVENTS_CONTAINER: "<div class='"+CLASSNAMES.WEEK_EVENTS+"' data-row='{row}'></div>"
     };
 
     /**
@@ -192,7 +190,7 @@
         self.events = [];
         self.eventInstances = [];
         self.viewOptions = ['daily', 'weekly', 'monthly'];
-        var weekStart = moment();
+        var weekStart = moment( moment().format('YYYY-MM-DD 00:00:00') );
         var weekEnd = moment(weekStart).add(6, 'days');
         var dailyDate = moment();
 
@@ -268,7 +266,7 @@
 
         }
 
-        const render = function()
+        const render_OLD = function()
         {
             var html = '';
             switch(self.settings.view)
@@ -299,6 +297,28 @@
             }
         }
 
+        const render = function()
+        {
+            var html = '';
+            switch(self.settings.view)
+            {
+                case 'daily':
+                    html = daily_calendar();
+                break;
+                case 'weekly':
+                    html = weekly_calendar();
+                break;
+                case 'monthly':
+                    html = create_view( create_calendar() );
+                break;
+            }
+
+            $(self.el).html('');
+            $( html ).prependTo($(self.el));
+            refresh_calendar_events();
+            start();
+        }
+
         const weekly_calendar = function(){
             return "<div class='"+CLASSNAMES.CONTAINER+"' id='"+SELECTORS.CONTAINER_ID+"'>"+
                 render_header('weekly')+
@@ -325,7 +345,7 @@
         {
             var heading = '<tr class="'+CLASSNAMES.MONTH_HEADING+'">'+
                             '<th col-span="0" style="width: initial; text-align: right;">Time</th>'+
-                            '<th col-span="10" style="width: initial; text-align: center;">&nbsp;</th>'+
+                            '<th col-span="10" style="width: initial; text-align: center;"></th>'+
                           '</tr>';
             return heading;
         }
@@ -336,11 +356,11 @@
                 body = '', amPm;
 
             for(var i = 0; i < hours.length; i++){
-                amPm = i > 12 ? 'PM' : 'AM';
+                amPm = i >= 12 ? 'PM' : 'AM';
                 body += `<tr class="${CLASSNAMES.WEEK_ROW} daily">
                             <td col-span="0" style="width: initial; text-align: right; padding-right: 15px;">${leading_zero(hours[i])} ${amPm}</td>
-                            <td col-span="10" style="width: initial;" class="${CLASSNAMES.DATE_CELL} ${CLASSNAMES.DATE_DAY}" data-date="${dailyDate.get('time')}">
-                                <div class="${CLASSNAMES.DATE_CELL_CONTENT}">&nbsp;</div>
+                            <td col-span="10" style="width: initial;" class="${CLASSNAMES.DATE_CELL} ${CLASSNAMES.DATE_DAY}" data-date="${moment(dailyDate.format(`YYYY-MM-DD ${leading_zero(hours[i])}:00:00`)).get('time')}">
+                                <div class="${CLASSNAMES.DATE_CELL_CONTENT}"></div>
                             </td>
                         </tr>`;
             }
@@ -366,13 +386,13 @@
                 amPm;
 
             for(var i = 0; i < hours.length; i++){
-                amPm = i > 12 ? 'PM' : 'AM';
+                amPm = i >= 12 ? 'PM' : 'AM';
                 time = leading_zero(hours[i])+' '+amPm;
                 body += '<tr class="'+CLASSNAMES.WEEK_ROW+' weekly">'+
                     '<td style=" text-align: right; padding-right: 15px;">'+time+'</td>';
                 for(var j = weekStart.get('time'); j <= weekEnd.get('time'); j = j+86400000){
                     timeDate = moment(moment( j ).format('YYYY-MM-DD ')+leading_zero(hours[i])+':00:00');
-                    body += '<td class="'+CLASSNAMES.DATE_CELL+' '+CLASSNAMES.DATE_DAY+'" data-date="'+timeDate.get('time')+'"><div class="'+CLASSNAMES.DATE_CELL_CONTENT+'">&nbsp;</div></td>';
+                    body += '<td class="'+CLASSNAMES.DATE_CELL+' '+CLASSNAMES.DATE_DAY+'" data-date="'+timeDate.get('time')+'"><div class="'+CLASSNAMES.DATE_CELL_CONTENT+'"></div></td>';
                 }
                 body += '</tr>';
             }
@@ -488,7 +508,6 @@
                 }
             }
 
-            reposition_event_containers();
         }
 
         const render_events = function()
@@ -498,27 +517,55 @@
 
             var {CALENDAR, WEEK_ROW, WEEK_EVENTS, DATE_CELL, DATE_CELL_CONTENT} = SELECTORS,
                 weeks = $(CALENDAR).find(WEEK_ROW),
-                week, eventsContainer, eventObj, container, containerDate, evStart, evEnd;
+                week, eventsContainer, eventObj, container, cellTimestamp, evStart, evEnd;
             var dateCells = $(CALENDAR).find(DATE_CELL);
             for(var i = 0; i < dateCells.length; i++){
+                // get date cell
                 container = dateCells.eq(i);
-                containerDate = (container.attr('data-date'));
-                // create instances
-                for(var j = 0; j < self.events.length; j++){
-                    var event = self.events[j];
-                    evStart = new Date( event.startDate ).getTime();
-                    evEnd = new Date( event.endDate ).getTime();
-                    if(containerDate >= evStart && containerDate <= evEnd){
-                        eventObj = new CPEvent(event, container.find(DATE_CELL_CONTENT), week, DATE_CELL, {
-                            onClick: handle_event_click
-                        });
-                        eventObj.render();
-                        self.eventInstances.push(eventObj);
+                
+                // Gets cell's timestampe (date and time in unix timestamp)
+                cellTimestamp = parseInt(container.attr('data-date'));
+                
+                // only if the cell's date is not a number
+                if( typeof cellTimestamp == 'number' && cellTimestamp >= 0){
+                    // create instances
+                    for(var j = 0; j < self.events.length; j++){
+                        var event = self.events[j];
+                        evStart = new Date( `${event.startDate} ${event.startTime}` ).getTime();
+                        evEnd = new Date( `${event.endDate} ${event.endTime}` ).getTime();
+
+                        // if event is happening on the current cell's date
+                        if(cellTimestamp >= moment(moment(evStart).format('YYYY-MM-DD 00:00:00')).get('time') 
+                            && cellTimestamp <= moment(moment(evEnd).format('YYYY-MM-DD 23:59:59')).get('time') ){
+
+                            /**
+                             * Gets start and end time for current cell, this is used
+                             * to verify if the event is occuring at the time of the
+                             * given cell timestamp
+                             */
+                            var st = moment(moment(cellTimestamp).format(`YYYY-MM-DDT${event.startTime}`)).get('time');
+                            var et = moment(moment(cellTimestamp).format(`YYYY-MM-DDT${event.endTime}`)).get('time');
+
+                            /**
+                             * if in monthly view, the time doesn't really matter else,
+                             * check if it's happening at the time within current
+                             * cell's date
+                             */
+                            if(self.settings.view == 'monthly' ||
+                              (cellTimestamp >= st && cellTimestamp <= et)
+                            ){
+                                eventObj = new CPEvent(event, container.find(DATE_CELL_CONTENT), week, DATE_CELL, {
+                                    onClick: handle_event_click
+                                });
+                                eventObj.render();
+                                self.eventInstances.push(eventObj);
+                            }
+                        }
                     }
                 }
+
             }
 
-            reposition_event_containers();
         }
 
         const destroy_events = function()
@@ -549,10 +596,6 @@
             // reposition empty cells background when window resizes
             $(window).off('resize', reposition_cell_background);
             $(window).on('resize', reposition_cell_background);
-
-            // reposition events and event containers when window resizes
-            $(window).off('resize', reposition_event_containers);
-            $(window).on('resize', reposition_event_containers);
 
             // listen for click on add menu buttons
             $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handle_add_menu_button_click);
@@ -585,13 +628,11 @@
             var days_heading_tpl = copy_var(TEMPLATES.DAYS_HEADING);
             var cell_tpl = copy_var(TEMPLATES.DAY_CELL);
             var week_tpl = copy_var(TEMPLATES.WEEK_ROW);
-            var ev_container_tpl = copy_var(TEMPLATES.EVENTS_CONTAINER);
             var view_options = !self.settings.hideViewOptions ? copy_var(TEMPLATES.VIEWS) : '';
             var add_menu = copy_var(TEMPLATES.ADD_MENU);
             var month_name = get_month_name(self.settings.month - 1);
             var season = get_season();
             var weeks = '';
-            var event_containers = '';
 
             // loop through calendar and the access weeks within it
             for(var i = 0; i < calendar.length; i++)
@@ -648,7 +689,6 @@
                 // create week template
                 var curr_week_tpl = copy_var(week_tpl);
                 curr_week_tpl = curr_week_tpl.replace('{row}', (i+1));
-                event_containers += ev_container_tpl.replace('{row}', (i+1));
 
                 weeks += curr_week_tpl.replace('{content}', week);
             }
@@ -665,8 +705,6 @@
             container_tpl = container_tpl.replace('{header}', render_header());
             // add calender to container
             container_tpl = container_tpl.replace('{calendar}', calendar_tpl);
-            // add event containers
-            container_tpl = container_tpl.replace('{event-containers}', event_containers);
             // add, add menu
             container_tpl = container_tpl.replace('{add_menu}', render_add_menu());
 
@@ -1103,55 +1141,6 @@
                 addMenuEl.css({'top': top, 'left': left});
 
             }
-        }
-
-        const reposition_event_containers = function()
-        {
-            // get plugin html selector references
-            var {CONTAINER, CALENDAR, WEEK_EVENTS, WEEK_ROW} = SELECTORS,
-                {EVENTS_CONTAINER_READY} = CLASSNAMES,
-                eventContainers = $(CONTAINER).find(WEEK_EVENTS), eventsContainer,
-                week, weekPosition, weekWidth, weekHeight,
-                calendarPosition = $(CALENDAR).position(),
-                container = $(CONTAINER),
-                containerHeight = container.outerHeight(), bottom;
-            
-            for(var i = 0; i < eventContainers.length; i++)
-            {
-                // get events container
-                eventsContainer = eventContainers.eq(i);
-
-                // 
-                var children = eventsContainer.children('button.cp-ev-event');
-                
-                // get week
-                week = $(CALENDAR).find(WEEK_ROW+'[data-row="'+eventsContainer.attr('data-row')+'"]');
-                // console.log(week);
-                // console.log(eventsContainer);
-                // console.log('______________');
-                weekPosition = week.position();
-                weekWidth = week.outerWidth;
-                weekHeight = week.outerHeight();
-                bottom = (containerHeight - (calendarPosition.top + weekPosition.top) - weekHeight) + 10;
-                if(children.length > 0)
-                {
-                    var childrenHeight = children.first().outerHeight() * children.length;
-                    bottom = bottom + childrenHeight;
-                }
-
-                // apply new styles to events container
-                eventsContainer.css({
-                    left: weekPosition.left,
-                    bottom: bottom,
-                    width: weekWidth
-                });
-            }
-
-            // reposition events
-            reposition_events();
-
-            // make events visible
-            // eventContainers.addClass(EVENTS_CONTAINER_READY);
         }
 
         const reposition_events = function()
