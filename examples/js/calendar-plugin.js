@@ -748,7 +748,14 @@
 
             // update object settings
             self.settings = $.extend({}, self.settings, settings);
-
+            // get now
+            var now = moment();
+            // reset week start
+            weekStart = now.get('month') + 1 == settings.month && now.get('year') == settings.year ? moment(settings.year + '-' + leading_zero(settings.month) + '-' + leading_zero(now.get('date'))) : moment(settings.year + '-' + leading_zero(settings.month) + '-01');
+            // reset week end
+            weekEnd = moment(weekStart).add(6, 'days');
+            // reset daily start
+            dailyDate = moment(weekStart);
             // rerender calendar
             launch();
         };
@@ -761,6 +768,15 @@
                 weekStart = moment(weekEnd).add(1, 'day');
             }
             weekEnd = moment(weekStart).add(6, 'day');
+            // get now
+            var now = moment();
+            // reset year start
+            self.settings = $.extend({}, self.settings, {
+                year: weekStart.get('year'),
+                month: weekStart.get('month') + 1
+            });
+            // reset daily start
+            dailyDate = moment(weekStart);
             // rerender calendar
             launch();
         };
@@ -772,6 +788,20 @@
             } else if (direction == 'right') {
                 dailyDate = moment(dailyDate).add(1, 'day');
             }
+
+            if (dailyDate.get('time') < weekStart.get('time') || dailyDate.getTime('time') > weekEnd.get('time')) {
+                // reset week start
+                weekStart = moment(dailyDate);
+                // reset week end
+                weekEnd = moment(weekStart).add(6, 'days');
+            }
+
+            // reset year start
+            self.settings = $.extend({}, self.settings, {
+                year: dailyDate.get('year'),
+                month: dailyDate.get('month') + 1
+            });
+
             // rerender calendar
             launch();
         };
