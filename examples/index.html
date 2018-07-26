@@ -40,6 +40,30 @@
                     startTime: 'startTime',
                     endTime: 'endTime'
                 },
+                form: [
+                    [{
+                        type: 'text',
+                        name: 'firstName',
+                        label: 'First Name',
+                        placeholder: 'Enter your first name here'
+                    },{
+                        type: 'text',
+                        name: 'lastName',
+                        label: 'Last Name',
+                        placeholder: 'Enter your last name here'
+                    },{
+                        type: 'select',
+                        name: 'gender',
+                        label: 'Gender',
+                        placeholder: 'Select your gender',
+                        options: {male: 'Male', female: 'Femaile'}
+                    },{
+                        type: 'date',
+                        name: 'startDate',
+                        label: 'Start Date',
+                        placeholder: '',
+                    }]
+                ]
             });
         </script>
     </body>
