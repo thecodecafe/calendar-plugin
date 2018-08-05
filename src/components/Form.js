@@ -33,7 +33,7 @@ class CPEventFormModal {
         this.uniqueID = uniqueID;
         this.id = null;
         this.modal = null;
-        this.options = $.extend({
+        this.options = Object.assign({
             url: null,
             edit: false,
             onWillShow: null,
@@ -55,8 +55,6 @@ class CPEventFormModal {
         this.modal = $(`#${this.uniqueID}`);
         // reset/set listeners
         this.listeners();
-        // initialize date pickers
-        // this.initializePickers();
     }
 
     render() {
@@ -78,31 +76,33 @@ class CPEventFormModal {
     }
 
     html() {
-        return `<div class="${this.PREFIX}-modal">
-            <div class="${this.PREFIX}-backdrop">&nbsp;</div>
-            <div class="${this.PREFIX}-content">
-                <div class="${this.PREFIX}-dialog">
-                    <form action="javascript:;" class="${this.PREFIX}-form" method="POST">
-                        <fieldset>
-                           ${ this.options.fieldsList.constructor == Array 
-                                ? this.options.fieldsList.map((group, index) => this.renderFieldsList(group, index)).join('') 
-                                : null
-                            }
-                            <div class="${this.PREFIX}-actions">
-                                ${this.options.editting 
-                                    ? `<button type="button" 
-                                        class="${this.PREFIX}-button delete"
-                                    > Delete </button>`
-                                    : ""
+        return `
+            <div class="${this.PREFIX}-modal">
+                <div class="${this.PREFIX}-backdrop">&nbsp;</div>
+                <div class="${this.PREFIX}-content">
+                    <div class="${this.PREFIX}-dialog">
+                        <form action="javascript:;" class="${this.PREFIX}-form" method="POST">
+                            <fieldset>
+                            ${ this.options.fieldsList.constructor == Array 
+                                    ? this.options.fieldsList.map((group, index) => this.renderFieldsList(group, index)).join('') 
+                                    : null
                                 }
-                                <button type="button" class="${this.PREFIX}-button ${this.CLASSNAMES().CANCEL}">Cancel</button>
-                                <button type="submit" class="${this.PREFIX}-button ${this.CLASSNAMES().SAVE}">Save</button>
-                            </div>
-                        </fieldset>
-                    </form>
+                                <div class="${this.PREFIX}-actions">
+                                    ${this.options.editting 
+                                        ? `<button type="button" 
+                                            class="${this.PREFIX}-button delete"
+                                        > Delete </button>`
+                                        : ""
+                                    }
+                                    <button type="button" class="${this.PREFIX}-button ${this.CLASSNAMES().CANCEL}">Cancel</button>
+                                    <button type="submit" class="${this.PREFIX}-button ${this.CLASSNAMES().SAVE}">Save</button>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>`;
+        `.trim();
     }
 
     renderFieldsList(group, index) {
@@ -171,17 +171,6 @@ class CPEventFormModal {
         // check for when for transition ends
         this.modal.find(FORM).off('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handleFormTransitionEnd.bind(this));
         this.modal.find(FORM).on('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handleFormTransitionEnd.bind(this));
-    }
-
-    initializePickers() {
-        var { START_DATE, END_DATE } = this.SELECTORS();
-        // initialize start date picker
-        this.modal.find(START_DATE).datepicker('destroy');
-        this.modal.find(START_DATE).datepicker();
-
-        // initialize end date picker
-        this.modal.find(END_DATE).datepicker('destroy');
-        this.modal.find(END_DATE).datepicker();
     }
 
     handleButtonClick(ev) {
@@ -377,10 +366,10 @@ class CPEventFormModal {
         if (url == null) return;
         console.log(this.getFormData());
         // join default data and form data
-        var data = $.extend({}, this.options.data, this.getFormData());
+        var data = Object.assign({}, this.options.data, this.getFormData());
         data = this.addStructs(data);
         // join default headers with custom headers
-        var headers = $.extend({}, this.options.headers);
+        var headers = Object.assign({}, this.options.headers);
         // disable form
         this.disable(true);
         // make ajax post request and try to save new event
@@ -438,9 +427,9 @@ class CPEventFormModal {
         // stop if no url was specified
         if (url == null) return;
         // join default data and form data
-        var data = $.extend({}, this.options.data);
+        var data = Object.assign({}, this.options.data);
         // join default headers with custom headers
-        var headers = $.extend({}, this.options.headers);
+        var headers = Object.assign({}, this.options.headers);
         // disable form
         this.disable(true);
         // make ajax post request and try to delete new event
@@ -487,11 +476,8 @@ class CPEventFormModal {
                 url = url.replace(regex, this.id);
             }
             else {
-                this.options.data = $.extend({}, this.options.data, { id: this.id });
+                this.options.data = Object.assign({}, this.options.data, { id: this.id });
             }
-        }
-        else {
-            url = url;
         }
         return url;
     }
@@ -503,5 +489,6 @@ class CPEventFormModal {
             }
         }
         $(this.uniqueID).remove();
+        this.fields = [];
     }
 }
