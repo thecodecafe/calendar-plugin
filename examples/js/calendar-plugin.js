@@ -1,3 +1,5 @@
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 (function ($) {
 
     /**
@@ -159,8 +161,8 @@
         var self = this;
         self.now = new Date();
         self.selection = [];
-        self.modal = null;
-        self.editModal = null;
+        self.createFormModal = null;
+        self.editFormModal = null;
         self.events = [];
         self.eventInstances = [];
         self.viewOptions = ['daily', 'weekly', 'monthly'];
@@ -190,7 +192,8 @@
                 creatRequest: null,
                 editRequest: null,
                 view: 'monthly',
-                hideViewOptions: false
+                hideViewOptions: false,
+                form: []
             }, options);
 
             // configure seasons
@@ -204,7 +207,13 @@
                 self.settings.month = 1;
             }
 
+            setupForm();
+
             launch();
+
+            if (options == 'destroy') {
+                self.destroy();
+            }
             return self;
         };
 
@@ -213,54 +222,49 @@
             render();
 
             // create new event modal
-            self.modal = new CPEventFormModal('new-event' + self.now.getTime(), {
+            self.createFormModal = new CPEventFormModal('new-event' + self.now.getTime(), {
                 url: self.settings.createUrl || self.settings.url || null,
                 data: self.settings.data,
                 headers: self.settings.headers,
-                onSaved: refresh_calendar_events,
-                requestStruct: self.settings.creatRequest || null
+                onSaved: refreshCalendarEvents,
+                requestStruct: self.settings.creatRequest || null,
+                fieldsList: self.settings.form
             });
-            self.modal.render();
+            self.createFormModal.render();
 
             // edit new event modal
-            self.editModal = new CPEventFormModal('edit-event' + self.now.getTime(), {
+            self.editFormModal = new CPEventFormModal('edit-event' + self.now.getTime(), {
                 editting: true,
                 url: self.settings.editUrl || self.settings.url || null,
                 deleteUrl: self.settings.deleteUrl || self.settings.url || null,
                 data: self.settings.data,
                 headers: self.settings.headers,
-                onSaved: refresh_calendar_events,
-                onDelete: refresh_calendar_events,
-                requestStruct: self.settings.editRequest || null
+                onSaved: refreshCalendarEvents,
+                onDelete: refreshCalendarEvents,
+                requestStruct: self.settings.editRequest || null,
+                fieldsList: self.settings.form
             });
-            self.editModal.render();
+            self.editFormModal.render();
         };
 
-        var render_OLD = function render_OLD() {
-            var html = '';
-            switch (self.settings.view) {
-                case 'daily':
-                    html = daily_calendar();
-                    break;
-                case 'weekly':
-                    html = weekly_calendar();
-                    break;
-                case 'monthly':
-                    html = create_view(create_calendar());
-                    break;
-            }
+        setupForm = function setupForm() {
+            var form = self.settings.form;
 
-            if ($(self.el).find(SELECTORS.CONTAINER).length > 0) {
-                $(self.el).find(SELECTORS.CONTAINER).fadeOut(1, function () {
-                    $(self.el).html('');
-                    $(html).hide().prependTo($(self.el)).fadeIn(1, function () {
-                        refresh_calendar_events();
-                    }).call(start);
-                });
-            } else {
-                $(html).hide().prependTo($(self.el)).fadeIn(1, function () {
-                    refresh_calendar_events();
-                }).call(start);
+            var fields = {};
+            if (!form || form.constructor != Array) {
+                return;
+            }
+            for (var i = 0; i < form.length; i++) {
+                if (form[i] == undefined) {
+                    continue;
+                }
+                if (form[i].constructor != Array) {
+                    console.warn('Form structure malformed at fields list ' + i + ' form must have the following structure in order to render. Array<Array<object>>');
+                    continue;
+                }
+                for (var j = 0; j < form[i].length; j++) {
+                    fields[form[i][j]['name']] = _extends({}, form[i][j]);
+                }
             }
         };
 
@@ -268,48 +272,48 @@
             var html = '';
             switch (self.settings.view) {
                 case 'daily':
-                    html = daily_calendar();
+                    html = dailyCalendar();
                     break;
                 case 'weekly':
-                    html = weekly_calendar();
+                    html = weeklyCalendar();
                     break;
                 case 'monthly':
-                    html = create_view(create_calendar());
+                    html = createView(createCalendar());
                     break;
             }
 
             $(self.el).html('');
             $(html).prependTo($(self.el));
-            refresh_calendar_events();
+            refreshCalendarEvents();
             start();
         };
 
-        var weekly_calendar = function weekly_calendar() {
-            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + render_header('weekly') + "<table class='" + CLASSNAMES.CALENDAR + " weekly'  cellspacing='0' cellpadding='0'>" + "<thead>" + render_weekly_heading() + "</thead>" + "<tbody>" + render_weekly_body() + "</tbody>" + "</table>" + render_add_menu() + "</div>";
+        var weeklyCalendar = function weeklyCalendar() {
+            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + renderHeader('weekly') + "<table class='" + CLASSNAMES.CALENDAR + " weekly'  cellspacing='0' cellpadding='0'>" + "<thead>" + renderWeeklyHeading() + "</thead>" + "<tbody>" + renderWeeklyBody() + "</tbody>" + "</table>" + renderAddMenu() + "</div>";
         };
 
-        var daily_calendar = function daily_calendar() {
-            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + render_header('daily') + "<table class='" + CLASSNAMES.CALENDAR + " daily'  cellspacing='0' cellpadding='0'>" + "<thead>" + render_daily_heading() + "</thead>" + "<tbody>" + render_daily_body() + "</tbody>" + "</table>" + render_add_menu() + "</div>";
+        var dailyCalendar = function dailyCalendar() {
+            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + renderHeader('daily') + "<table class='" + CLASSNAMES.CALENDAR + " daily'  cellspacing='0' cellpadding='0'>" + "<thead>" + renderDailyHeading() + "</thead>" + "<tbody>" + renderDailyBody() + "</tbody>" + "</table>" + renderAddMenu() + "</div>";
         };
 
-        var render_daily_heading = function render_daily_heading() {
+        var renderDailyHeading = function renderDailyHeading() {
             var heading = '<tr class="' + CLASSNAMES.MONTH_HEADING + '">' + '<th>Time</th>' + '<th></th>' + '</tr>';
             return heading;
         };
 
-        var render_daily_body = function render_daily_body() {
+        var renderDailyBody = function renderDailyBody() {
             var hours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
                 body = '',
                 amPm;
 
             for (var i = 0; i < hours.length; i++) {
                 amPm = i >= 12 ? 'PM' : 'AM';
-                body += '<tr class="' + CLASSNAMES.WEEK_ROW + ' daily">\n                            <td>' + leading_zero(hours[i]) + ' ' + amPm + '</td>\n                            <td class="' + CLASSNAMES.DATE_CELL + ' ' + CLASSNAMES.DATE_DAY + '" data-date="' + moment(dailyDate.format('YYYY-MM-DD ' + leading_zero(hours[i]) + ':00:00')).get('time') + '">\n                                <div class="' + CLASSNAMES.DATE_CELL_CONTENT + '"></div>\n                            </td>\n                        </tr>';
+                body += '<tr class="' + CLASSNAMES.WEEK_ROW + ' daily">\n                            <td>' + leadingZero(hours[i]) + ' ' + amPm + '</td>\n                            <td class="' + CLASSNAMES.DATE_CELL + ' ' + CLASSNAMES.DATE_DAY + '" data-date="' + moment(dailyDate.format('YYYY-MM-DD ' + leadingZero(hours[i]) + ':00:00')).get('time') + '">\n                                <div class="' + CLASSNAMES.DATE_CELL_CONTENT + '"></div>\n                            </td>\n                        </tr>';
             }
             return body;
         };
 
-        var render_weekly_heading = function render_weekly_heading() {
+        var renderWeeklyHeading = function renderWeeklyHeading() {
             var heading = '<tr class="' + CLASSNAMES.MONTH_HEADING + '"><th>Time</th>';
             for (var i = weekStart.get('time'); i <= weekEnd.get('time'); i = i + 86400000) {
                 heading += '<th >' + moment(i).format('ddd DD') + '</th>';
@@ -318,7 +322,7 @@
             return heading;
         };
 
-        var render_weekly_body = function render_weekly_body() {
+        var renderWeeklyBody = function renderWeeklyBody() {
             var hours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
                 body = '',
                 time,
@@ -327,10 +331,10 @@
 
             for (var i = 0; i < hours.length; i++) {
                 amPm = i >= 12 ? 'PM' : 'AM';
-                time = leading_zero(hours[i]) + ' ' + amPm;
+                time = leadingZero(hours[i]) + ' ' + amPm;
                 body += '<tr class="' + CLASSNAMES.WEEK_ROW + ' weekly">' + '<td style=" text-align: right; padding-right: 15px;">' + time + '</td>';
                 for (var j = weekStart.get('time'); j <= weekEnd.get('time'); j = j + 86400000) {
-                    timeDate = moment(moment(j).format('YYYY-MM-DD ') + leading_zero(hours[i]) + ':00:00');
+                    timeDate = moment(moment(j).format('YYYY-MM-DD ') + leadingZero(hours[i]) + ':00:00');
                     body += '<td class="' + CLASSNAMES.DATE_CELL + ' ' + CLASSNAMES.DATE_DAY + '" data-date="' + timeDate.get('time') + '"><div class="' + CLASSNAMES.DATE_CELL_CONTENT + '"></div></td>';
                 }
                 body += '</tr>';
@@ -338,45 +342,45 @@
             return body;
         };
 
-        var render_header = function render_header(type) {
-            var month_name = get_month_name(self.settings.month - 1);
+        var renderHeader = function renderHeader(type) {
+            var month_name = getMonthName(self.settings.month - 1);
             var headerClassnames = '';
-            headerClassnames += ' ' + CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(self.settings.month - 1).toLowerCase()) + ' ';
-            headerClassnames += ' ' + CLASSNAMES.SEASON_HEADER.replace('{season}', get_season() ? get_season().name : '') + ' ';
+            headerClassnames += ' ' + CLASSNAMES.MONTH_HEADER.replace('{month}', getMonthName(self.settings.month - 1).toLowerCase()) + ' ';
+            headerClassnames += ' ' + CLASSNAMES.SEASON_HEADER.replace('{season}', getSeason() ? getSeason().name : '') + ' ';
             // create view specific name
             if (type == 'weekly') {
-                var month_name = get_month_name(weekStart.get('month'));
-                headerClassnames += ' ' + CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(weekStart.get('month') - 1).toLowerCase()) + ' ';
+                var month_name = getMonthName(weekStart.get('month'));
+                headerClassnames += ' ' + CLASSNAMES.MONTH_HEADER.replace('{month}', getMonthName(weekStart.get('month') - 1).toLowerCase()) + ' ';
 
-                month_name += ' ' + leading_zero(weekStart.get('date')) + ' - ';
-                month_name += weekEnd.get('month') != weekStart.get('month') ? get_month_name(weekEnd.get('month')) + ' ' + leading_zero(weekEnd.get('date')) : leading_zero(weekEnd.get('date'));
+                month_name += ' ' + leadingZero(weekStart.get('date')) + ' - ';
+                month_name += weekEnd.get('month') != weekStart.get('month') ? getMonthName(weekEnd.get('month')) + ' ' + leadingZero(weekEnd.get('date')) : leadingZero(weekEnd.get('date'));
             }
 
             // create view specific name
             if (type == 'daily') {
                 var month_name = dailyDate.format('Do MMMM YYYY');
-                headerClassnames += ' ' + CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(dailyDate.get('month') - 1).toLowerCase()) + ' ';
+                headerClassnames += ' ' + CLASSNAMES.MONTH_HEADER.replace('{month}', getMonthName(dailyDate.get('month') - 1).toLowerCase()) + ' ';
             }
 
             // return html
-            return "<div class='" + CLASSNAMES.HEADER + " " + headerClassnames + "'>" + "<div class='" + CLASSNAMES.NAV_CONTROLS + "'>" + render_nav_control('left') + render_nav_control('right') + "</div>" + "<div class='" + CLASSNAMES.HEADER_CONTENT + "'>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS_CONTAINER + "'>" + "<button class='" + CLASSNAMES.MONTH_NAME_BUTTON + "'>" + month_name + "<span class='caret'></span></button>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS + "' id='headerOptionsComponent'>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS_INNER + "'>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS_BUTTONS_CONTAINER + "'>" + "<a class='" + CLASSNAMES.HEADER_OPTIONS_BUTTON + "' href='javascript:;' " + "data-export='calendar' data-format='pdf'>Export to .pdf</a>" + "<a class='" + CLASSNAMES.HEADER_OPTIONS_BUTTON + "' href='javascript:;' " + "data-export='calendar' data-format='docx'>Export to .docx</a>" + "</div>" + "<span class='caret'></span>" + "</div>" + "</div>" + "</div>" + "</div>" + render_view_options() + "</div>";
+            return "<div class='" + CLASSNAMES.HEADER + " " + headerClassnames + "'>" + "<div class='" + CLASSNAMES.NAV_CONTROLS + "'>" + renderNavControl('left') + renderNavControl('right') + "</div>" + "<div class='" + CLASSNAMES.HEADER_CONTENT + "'>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS_CONTAINER + "'>" + "<button class='" + CLASSNAMES.MONTH_NAME_BUTTON + "'>" + month_name + "<span class='caret'></span></button>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS + "' id='headerOptionsComponent'>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS_INNER + "'>" + "<div class='" + CLASSNAMES.HEADER_OPTIONS_BUTTONS_CONTAINER + "'>" + "<a class='" + CLASSNAMES.HEADER_OPTIONS_BUTTON + "' href='javascript:;' " + "data-export='calendar' data-format='pdf'>Export to .pdf</a>" + "<a class='" + CLASSNAMES.HEADER_OPTIONS_BUTTON + "' href='javascript:;' " + "data-export='calendar' data-format='docx'>Export to .docx</a>" + "</div>" + "<span class='caret'></span>" + "</div>" + "</div>" + "</div>" + "</div>" + renderViewOptions() + "</div>";
         };
 
-        var render_nav_control = function render_nav_control(direction) {
+        var renderNavControl = function renderNavControl(direction) {
             var label = direction == 'right' ? '&rarr;' : '&larr;';
             return "<button class='" + CLASSNAMES.CONTROLS_CONTAINER + "' " + "type='submit' " + direction + ">" + label + "</button>";
         };
 
-        var render_view_options = function render_view_options() {
+        var renderViewOptions = function renderViewOptions() {
             return "<div class='" + CLASSNAMES.VIEWS_LIST_CONTAINER + "'><ul class='" + CLASSNAMES.VIEWS_LIST + "'>" + "<li class='" + CLASSNAMES.VIEWS_ITEM + "'>" + "<button type='button' class='" + CLASSNAMES.VIEW_BUTTON + " daily' data-toggle='calendar-view' data-option='daily'>Day</button>" + "</li>" + "<li class='" + CLASSNAMES.VIEWS_ITEM + "'>" + "<button type='button' class='" + CLASSNAMES.VIEW_BUTTON + " weekly' data-toggle='calendar-view' data-option='weekly'>Week</button>" + "</li>" + "<li class='" + CLASSNAMES.VIEWS_ITEM + "'>" + "<button type='button' class='" + CLASSNAMES.VIEW_BUTTON + " monthly' data-toggle='calendar-view' data-option='monthly'>Month</button>" + "</li>" + "</ul></div>";
         };
 
-        var render_add_menu = function render_add_menu() {
+        var renderAddMenu = function renderAddMenu() {
             return "<div class='" + CLASSNAMES.ADD_MENU_CONTAINER + "' id='addMenuComponent'>" + "<div class='" + CLASSNAMES.ADD_MENU_INNER + "'>" + "<div class='" + CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER + "'>" + "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + "' type='button' data-action='add-event'>" + "Add Event</button>" + "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + " cancel' data-action='cancel' type='button'>" + "Cancel</button>" + "</div>" + "<span class='caret'></span>" + "</div>" + "</div>";
         };
-        var render_events = function render_events() {
+        var renderEvents = function renderEvents() {
             // destroy old events first
-            destroy_events();
+            destroyEvents();
 
             var CALENDAR = SELECTORS.CALENDAR,
                 WEEK_ROW = SELECTORS.WEEK_ROW,
@@ -426,7 +430,7 @@
                              */
                             if (self.settings.view == 'monthly' || cellTimestamp >= st && cellTimestamp <= et) {
                                 eventObj = new CPEvent(event, container.find(DATE_CELL_CONTENT), week, DATE_CELL, {
-                                    onClick: handle_event_click
+                                    onClick: handleEventClick
                                 });
                                 eventObj.render();
                                 self.eventInstances.push(eventObj);
@@ -437,7 +441,7 @@
             }
         };
 
-        var destroy_events = function destroy_events() {
+        var destroyEvents = function destroyEvents() {
             for (var i = 0; i < self.eventInstances.length; i++) {
                 var eventInstance = self.eventInstances[i];
                 eventInstance.destroy();
@@ -453,53 +457,53 @@
 
             // resize calendar
 
-            resize_calendar();
+            resizeCalendar();
 
             // resize calendar when window resizes
-            $(window).off('resize', resize_calendar);
-            $(window).on('resize', resize_calendar);
+            $(window).off('resize', resizeCalendar);
+            $(window).on('resize', resizeCalendar);
 
             // reposition empty cells background
-            reposition_cell_background();
+            repositionCellBackground();
 
             // reposition empty cells background when window resizes
-            $(window).off('resize', reposition_cell_background);
-            $(window).on('resize', reposition_cell_background);
+            $(window).off('resize', repositionCellBackground);
+            $(window).on('resize', repositionCellBackground);
 
             // listen for click on add menu buttons
-            $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handle_add_menu_button_click);
-            $(CONTAINER).find(ADD_MENU_BUTTON).on('click', handle_add_menu_button_click);
+            $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handleAddMenuButtonClick);
+            $(CONTAINER).find(ADD_MENU_BUTTON).on('click', handleAddMenuButtonClick);
 
             // listen for click on export button
-            $(CONTAINER).find(EXPORT_BUTTON).off('click', export_to);
-            $(CONTAINER).find(EXPORT_BUTTON).on('click', export_to);
+            $(CONTAINER).find(EXPORT_BUTTON).off('click', exportTo);
+            $(CONTAINER).find(EXPORT_BUTTON).on('click', exportTo);
 
             // listen for control button click event
-            listen_for_control_button_click();
+            listenForControlButtonClick();
 
             // listen for date select
-            listen_for_date_select();
+            listenForDateSelect();
 
             // update calendar with selection
-            update_Selection();
+            updateSelection();
 
             // select active view
-            select_active_view();
+            selectActiveView();
 
             // listen for view select
-            listen_view_select();
+            listenViewSelect();
         };
 
-        var create_view = function create_view(calendar) {
-            var container_tpl = copy_var(TEMPLATES.CONTAINER);
-            var calendar_tpl = copy_var(TEMPLATES.MAIN);
-            var days_heading_tpl = copy_var(TEMPLATES.DAYS_HEADING);
-            var cell_tpl = copy_var(TEMPLATES.DAY_CELL);
-            var week_tpl = copy_var(TEMPLATES.WEEK_ROW);
-            var view_options = !self.settings.hideViewOptions ? copy_var(TEMPLATES.VIEWS) : '';
-            var add_menu = copy_var(TEMPLATES.ADD_MENU);
-            var month_name = get_month_name(self.settings.month - 1);
-            var season = get_season();
+        var createView = function createView(calendar) {
+            var container_tpl = copyVar(TEMPLATES.CONTAINER);
+            var calendar_tpl = copyVar(TEMPLATES.MAIN);
+            var days_heading_tpl = copyVar(TEMPLATES.DAYS_HEADING);
+            var cell_tpl = copyVar(TEMPLATES.DAY_CELL);
+            var week_tpl = copyVar(TEMPLATES.WEEK_ROW);
+            var view_options = !self.settings.hideViewOptions ? copyVar(TEMPLATES.VIEWS) : '';
+            var add_menu = copyVar(TEMPLATES.ADD_MENU);
+            var month_name = getMonthName(self.settings.month - 1);
+            var season = getSeason();
             var weeks = '';
 
             // loop through calendar and the access weeks within it
@@ -525,7 +529,7 @@
                         if (j == 0 && dayNum.length < 1) classnames += ' ' + CLASSNAMES.EMPTY_DAY_BEGINNING + ' ';
 
                         // add ending class to last empty day
-                        if (prevDayNum && get_month_days() == prevDayNum.trim()) classnames += ' ' + CLASSNAMES.EMPTY_DAY_ENDING + ' ';
+                        if (prevDayNum && getMonthDays() == prevDayNum.trim()) classnames += ' ' + CLASSNAMES.EMPTY_DAY_ENDING + ' ';
 
                         // make dat attribute empty
                         day = day.replace('{date}', '');
@@ -547,7 +551,7 @@
                     week += day;
                 }
                 // create week template
-                var curr_week_tpl = copy_var(week_tpl);
+                var curr_week_tpl = copyVar(week_tpl);
                 curr_week_tpl = curr_week_tpl.replace('{row}', i + 1);
 
                 weeks += curr_week_tpl.replace('{content}', week);
@@ -562,24 +566,24 @@
             calendar_tpl = calendar_tpl.replace('{classnames}', calenderClassnames);
 
             // add header to calendar
-            container_tpl = container_tpl.replace('{header}', render_header());
+            container_tpl = container_tpl.replace('{header}', renderHeader());
             // add calender to container
             container_tpl = container_tpl.replace('{calendar}', calendar_tpl);
             // add, add menu
-            container_tpl = container_tpl.replace('{add_menu}', render_add_menu());
+            container_tpl = container_tpl.replace('{add_menu}', renderAddMenu());
 
             // return generated calendar
             return container_tpl;
         };
 
-        var create_calendar = function create_calendar() {
-            var days = get_month_days(self.settings.month, self.settings.year);
+        var createCalendar = function createCalendar() {
+            var days = getMonthDays(self.settings.month, self.settings.year);
             var firstDay = new Date(self.settings.year, self.settings.month - 1, 1);
             var startDay = firstDay.getDay();
-            return array_chunk(create_month_arrays(startDay, days), 7);
+            return arrayChunk(createMonthArrays(startDay, days), 7);
         };
 
-        var create_month_arrays = function create_month_arrays(start, maxDays) {
+        var createMonthArrays = function createMonthArrays(start, maxDays) {
             var days = [];
             // add days to days array
             for (i = 0; i < 35; i++) {
@@ -595,7 +599,7 @@
             return days;
         };
 
-        var get_month_days = function get_month_days(month, year) {
+        var getMonthDays = function getMonthDays(month, year) {
             // create month number as string
             var monthStr = typeof month == 'number' ? month.toString() : month;
 
@@ -608,21 +612,21 @@
 
             // get days in the specified month
             if (_31Days.indexOf(monthStr) != -1) days = 31;else if (_30Days.indexOf(monthStr) != -1) days = 30;else if (month == 2) {
-                if (is_leap_year(year)) days = 29;else days = 28;
+                if (isLeapYear(year)) days = 29;else days = 28;
             }
 
             // return the number of the days for the given month
             return days;
         };
 
-        var is_leap_year = function is_leap_year(year) {
+        var isLeapYear = function isLeapYear(year) {
             if (year % 4 == 0) // basic rule
                 return true; // is leap year
             /* else */ // else not needed when statement is "return"
             return false; // is not leap year
         };
 
-        var resize_calendar = function resize_calendar() {
+        var resizeCalendar = function resizeCalendar() {
             var CONTAINER = SELECTORS.CONTAINER,
                 CALENDAR = SELECTORS.CALENDAR,
                 WEEK_ROW = SELECTORS.WEEK_ROW,
@@ -635,10 +639,10 @@
                 height = 'initial';
             }
             cells.find(DATE_CELL_CONTENT).css({ height: height });
-            reposition_addmenu();
+            repositionAddmenu();
         };
 
-        var reposition_cell_background = function reposition_cell_background() {
+        var repositionCellBackground = function repositionCellBackground() {
             var CONTAINER = SELECTORS.CONTAINER,
                 CALENDAR = SELECTORS.CALENDAR,
                 WEEK_ROW = SELECTORS.WEEK_ROW,
@@ -667,38 +671,38 @@
             }
         };
 
-        var listen_for_control_button_click = function listen_for_control_button_click() {
+        var listenForControlButtonClick = function listenForControlButtonClick() {
             // copy selector name
-            var BUTTONS = copy_var(SELECTORS.CONTROL_BUTTONS);
-            $(BUTTONS).off('click', handle_control_button_click);
-            $(BUTTONS).on('click', handle_control_button_click);
+            var BUTTONS = copyVar(SELECTORS.CONTROL_BUTTONS);
+            $(BUTTONS).off('click', handleControlButtonClick);
+            $(BUTTONS).on('click', handleControlButtonClick);
         };
 
-        var handle_control_button_click = function handle_control_button_click(ev) {
+        var handleControlButtonClick = function handleControlButtonClick(ev) {
             // get target element
             var el = ev.target;
             var left = $(el).attr('left');
             var right = $(el).attr('right');
-            var settings = copy_var(self.settings);
+            var settings = copyVar(self.settings);
             var direction = left !== undefined ? 'left' : undefined;
             direction = right !== undefined ? 'right' : direction;
 
             // chang month if calendar is in monthly view
             if (settings.view == 'monthly') {
-                change_month(direction);
+                changeMonth(direction);
             }
             // change week if calendar is in week view
             if (settings.view == 'weekly') {
-                change_week(direction);
+                changeWeek(direction);
             }
             // determine what direction to go to
             if (settings.view == 'daily') {
-                change_date(direction);
+                changeDate(direction);
             }
         };
 
-        var change_month = function change_month(direction) {
-            var settings = copy_var(self.settings);
+        var changeMonth = function changeMonth(direction) {
+            var settings = copyVar(self.settings);
 
             if (direction == 'left') {
                 // set year
@@ -717,7 +721,7 @@
             // get now
             var now = moment();
             // reset week start
-            weekStart = now.get('month') + 1 == settings.month && now.get('year') == settings.year ? moment(settings.year + '-' + leading_zero(settings.month) + '-' + leading_zero(now.get('date'))) : moment(settings.year + '-' + leading_zero(settings.month) + '-01');
+            weekStart = now.get('month') + 1 == settings.month && now.get('year') == settings.year ? moment(settings.year + '-' + leadingZero(settings.month) + '-' + leadingZero(now.get('date'))) : moment(settings.year + '-' + leadingZero(settings.month) + '-01');
             // reset week end
             weekEnd = moment(weekStart).add(6, 'days');
             // reset daily start
@@ -726,8 +730,8 @@
             launch();
         };
 
-        var change_week = function change_week(direction) {
-            var settings = copy_var(self.settings);
+        var changeWeek = function changeWeek(direction) {
+            var settings = copyVar(self.settings);
             if (direction == 'left') {
                 weekStart = moment(weekStart).subtract(8, 'day');
             } else if (direction == 'right') {
@@ -747,8 +751,8 @@
             launch();
         };
 
-        var change_date = function change_date(direction) {
-            var settings = copy_var(self.settings);
+        var changeDate = function changeDate(direction) {
+            var settings = copyVar(self.settings);
             if (direction == 'left') {
                 dailyDate = moment(dailyDate).subtract(1, 'day');
             } else if (direction == 'right') {
@@ -772,14 +776,14 @@
             launch();
         };
 
-        var handle_add_menu_button_click = function handle_add_menu_button_click(ev) {
+        var handleAddMenuButtonClick = function handleAddMenuButtonClick(ev) {
             // get required selectors
             var CONTAINER = SELECTORS.CONTAINER,
                 ADD_MENU_BUTTON = SELECTORS.ADD_MENU_BUTTON;
 
             // turn click event listener off
 
-            $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handle_add_menu_button_click);
+            $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handleAddMenuButtonClick);
 
             // get element
             var el = $(ev.currentTarget);
@@ -787,11 +791,11 @@
             switch (action) {
                 case 'add-event':
                     // pop up modal
-                    add_event();
+                    addEvent();
                     break;
                 case 'cancel':
                     // cancel selection
-                    cancel_selection();
+                    cancelSelection();
                     break;
                 default:
                     // do nothing
@@ -802,7 +806,7 @@
             start();
         };
 
-        var add_event = function add_event() {
+        var addEvent = function addEvent() {
             // get start and end
             var start = self.selection.length > 0 ? self.selection[0] : null;
             var end = self.selection.length > 1 ? self.selection[1] : start;
@@ -820,46 +824,46 @@
             };
 
             // show modal
-            self.modal.show(data);
+            self.createFormModal.show(data);
 
             // calcel selection
-            cancel_selection();
+            cancelSelection();
         };
 
-        var cancel_selection = function cancel_selection() {
+        var cancelSelection = function cancelSelection() {
             self.selection = [];
-            update_Selection();
+            updateSelection();
         };
 
-        var handle_event_click = function handle_event_click(event) {
+        var handleEventClick = function handleEventClick(event) {
             // create start and end date
             var startDate = new Date(event.startDate);
             var endDate = new Date(event.endDate);
 
             // create new event data
-            var data = {
+            var data = Object.assign({}, event, {
                 title: event.title,
                 startDate: startDate,
                 endDate: endDate,
                 startTime: event.startTime,
                 endTime: event.endTime
-            };
+            });
 
-            self.editModal.show(data, event.id);
+            self.editFormModal.show(data, event.id);
         };
 
-        var listen_for_date_select = function listen_for_date_select() {
+        var listenForDateSelect = function listenForDateSelect() {
             var DATE_DAY = SELECTORS.DATE_DAY;
 
-            $(DATE_DAY).off('click', handle_date_select);
-            $(DATE_DAY).on('click', handle_date_select);
+            $(DATE_DAY).off('click', handleDateSelect);
+            $(DATE_DAY).on('click', handleDateSelect);
         };
 
-        var handle_date_select = function handle_date_select(ev) {
+        var handleDateSelect = function handleDateSelect(ev) {
             // turn off click event listener
             var DATE_DAY = SELECTORS.DATE_DAY;
 
-            $(DATE_DAY).off('click', handle_date_select);
+            $(DATE_DAY).off('click', handleDateSelect);
 
             // get element and date
             var el = ev.currentTarget;
@@ -883,14 +887,14 @@
                 }
 
                 // update the selected dates on calendar
-                update_Selection();
+                updateSelection();
             }
 
             // listen for click event again
-            listen_for_date_select();
+            listenForDateSelect();
         };
 
-        var update_Selection = function update_Selection() {
+        var updateSelection = function updateSelection() {
             var CALENDAR = SELECTORS.CALENDAR,
                 DATE_DAY = SELECTORS.DATE_DAY;
             var DATE_SELECTED = CLASSNAMES.DATE_SELECTED;
@@ -929,10 +933,10 @@
                         }
                 }
             }
-            toggle_add_menu_visiblity();
+            toggleAddMenuVisiblity();
         };
 
-        var toggle_add_menu_visiblity = function toggle_add_menu_visiblity() {
+        var toggleAddMenuVisiblity = function toggleAddMenuVisiblity() {
             // get plugin html selector references
             var CONTAINER = SELECTORS.CONTAINER,
                 ADD_MENU_CONTAINER = SELECTORS.ADD_MENU_CONTAINER,
@@ -959,10 +963,10 @@
             }
 
             // reposition add menu
-            reposition_addmenu();
+            repositionAddmenu();
         };
 
-        var reposition_addmenu = function reposition_addmenu() {
+        var repositionAddmenu = function repositionAddmenu() {
             // get plugin html selector references
             var ADD_MENU_CONTAINER = SELECTORS.ADD_MENU_CONTAINER,
                 DATE_CELL_CONTENT = SELECTORS.DATE_CELL_CONTENT,
@@ -971,10 +975,10 @@
 
             // get end element
 
-            var end = get_selection_end_cell();
+            var end = getSelectionEndCell();
             var container = $(CONTAINER);
             var addMenuEl = container.find(ADD_MENU_CONTAINER);
-            var viewport = get_viewport();
+            var viewport = getViewport();
 
             if (end != null && end != undefined) {
                 var offset = end.offset();
@@ -1003,14 +1007,14 @@
             }
         };
 
-        var reposition_events = function reposition_events() {
+        var repositionEvents = function repositionEvents() {
             for (var i = 0; i < self.eventInstances.length; i++) {
                 var eventInstance = self.eventInstances[i];
                 eventInstance.reposition();
             }
         };
 
-        var array_chunk = function array_chunk(data, chunk_size) {
+        var arrayChunk = function arrayChunk(data, chunk_size) {
             var checked_data = [];
             for (var i = 0; i < data.length; i += chunk_size) {
                 checked_data.push(data.slice(i, i + chunk_size));
@@ -1018,11 +1022,11 @@
             return checked_data;
         };
 
-        var copy_var = function copy_var(data) {
+        var copyVar = function copyVar(data) {
             return JSON.parse(JSON.stringify(data));
         };
 
-        var get_month_name = function get_month_name(month) {
+        var getMonthName = function getMonthName(month) {
             // return nuthing if specified month does not exist
             if (MONTHS[month] == undefined) {
                 return '';
@@ -1031,7 +1035,7 @@
             return MONTHS[month];
         };
 
-        var get_season = function get_season() {
+        var getSeason = function getSeason() {
             for (var name in self.settings.seasons) {
                 // get season
                 var season = self.settings.seasons[name];
@@ -1052,7 +1056,7 @@
             return null;
         };
 
-        var get_selection_end_cell = function get_selection_end_cell() {
+        var getSelectionEndCell = function getSelectionEndCell() {
             // get end date from selection
             var start = self.selection.length > 0 ? self.selection[0] : null;
             var end = self.selection.length > 1 ? self.selection[1] : start;
@@ -1071,13 +1075,13 @@
             return end;
         };
 
-        var get_viewport = function get_viewport() {
+        var getViewport = function getViewport() {
             var width = $(document).outerWidth();
             var height = $(document).outerHeight();
             return { width: width, height: height };
         };
 
-        var refresh_calendar_events = function refresh_calendar_events() {
+        var refreshCalendarEvents = function refreshCalendarEvents() {
             // cancel ongoing get requests
             if (getEventsRequest && getEventsRequest.readyState != 4) {
                 getEventsRequest.abort();
@@ -1104,17 +1108,17 @@
                 method: 'GET',
                 data: data,
                 headers: headers
-            }).done(refresh_calendar_events_done).fail(refresh_calendar_events_fail);
+            }).done(refreshCalendarEventsDone).fail(refreshCalendarEventsFail);
         };
 
-        var refresh_calendar_events_done = function refresh_calendar_events_done(resp) {
+        var refreshCalendarEventsDone = function refreshCalendarEventsDone(resp) {
             // get the events
-            self.events = get_events_data(resp);
+            self.events = getEventsData(resp);
             // render events
-            render_events();
+            renderEvents();
         };
 
-        var refresh_calendar_events_fail = function refresh_calendar_events_fail(err) {
+        var refreshCalendarEventsFail = function refreshCalendarEventsFail(err) {
             if (err.statusText != 'abort') {
                 var message = 'Failed to load events.';
                 var message = err.message && err.message.length > 0 ? err.message : message;
@@ -1122,7 +1126,7 @@
             }
         };
 
-        var get_events_data = function get_events_data(data) {
+        var getEventsData = function getEventsData(data) {
             if (self.settings.respData === null) return data;
 
             if (typeof self.settings.respData != 'string') {
@@ -1130,11 +1134,11 @@
                 return data;
             }
 
-            var dataPath = copy_var(self.settings.respData);
+            var dataPath = copyVar(self.settings.respData);
             dataPath = dataPath.trim();
             dataPath = dataPath.split('.');
 
-            var events = copy_var(data);
+            var events = copyVar(data);
 
             for (var i = 0; i < dataPath.length; i++) {
                 if (!events.hasOwnProperty(dataPath[i])) continue;
@@ -1143,36 +1147,36 @@
 
             if (events) {
                 for (var i = 0; i < events.length; i++) {
-                    events[i] = transform_data(events[i]);
+                    events[i] = parseEvent(events[i]);
                 }
             }
 
             return events;
         };
 
-        var transform_data = function transform_data(data) {
-            var transform = {
-                id: find_data(data, self.settings.id),
-                title: find_data(data, self.settings.title),
-                startDate: find_data(data, self.settings.startDate),
-                endDate: find_data(data, self.settings.endDate),
-                startTime: find_data(data, self.settings.startTime),
-                endTime: find_data(data, self.settings.endTime)
-            };
-            return transform;
+        var parseEvent = function parseEvent(data) {
+            if (self.settings.map && self.settings.map.constructor == Object) {
+                var transform = Object.assign({}, data);
+                var mapKeys = Object.keys(self.settings.map);
+                for (var i = 0; i < mapKeys.length; i++) {
+                    transform[mapKeys[i]] = findData(data, self.settings.map[mapKeys[i]]);
+                }
+                return transform;
+            }
+            return data;
         };
 
-        var find_data = function find_data(data, key) {
+        var findData = function findData(data, key) {
             if (typeof key != 'string') {
                 console.error(new Error('Data path invalid, please contact system\'s admin.'));
                 return data;
             }
 
-            var dataPath = copy_var(key);
+            var dataPath = copyVar(key);
             dataPath = dataPath.trim();
             dataPath = dataPath.split('.');
 
-            var found = copy_var(data);
+            var found = copyVar(data);
             var didFind = false;
 
             for (var i = 0; i < dataPath.length; i++) {
@@ -1184,7 +1188,7 @@
             return didFind ? found : null;
         };
 
-        var is_in_week = function is_in_week(week, event) {
+        var isInWeek = function isInWeek(week, event) {
             // define variables
             var DATE_CELL = SELECTORS.DATE_CELL,
                 cells = week.find(DATE_CELL),
@@ -1210,7 +1214,7 @@
             return found;
         };
 
-        var export_to = function export_to(ev) {
+        var exportTo = function exportTo(ev) {
             ev.preventDefault();
             var el = $(ev.currentTarget),
                 CONTAINER = SELECTORS.CONTAINER,
@@ -1222,12 +1226,12 @@
             if (format == 'pdf') {} else if (format == 'docx') {}
         };
 
-        var listen_view_select = function listen_view_select() {
-            $(SELECTORS.VIEW_SELECTOR).off('click', handle_view_select);
-            $(SELECTORS.VIEW_SELECTOR).on('click', handle_view_select);
+        var listenViewSelect = function listenViewSelect() {
+            $(SELECTORS.VIEW_SELECTOR).off('click', handleViewSelect);
+            $(SELECTORS.VIEW_SELECTOR).on('click', handleViewSelect);
         };
 
-        var handle_view_select = function handle_view_select(ev) {
+        var handleViewSelect = function handleViewSelect(ev) {
             var el = $(ev.currentTarget);
             var option = el.attr('data-option');
             if (self.viewOptions.indexOf(option) == -1) {
@@ -1238,13 +1242,13 @@
                     view: option
                 });
                 // remove any selection
-                cancel_selection();
+                cancelSelection();
                 // rerender calendar
                 setTimeout(launch, 200);
             }
         };
 
-        var select_active_view = function select_active_view() {
+        var selectActiveView = function selectActiveView() {
             var VIEWS_LIST_CONTAINER = SELECTORS.VIEWS_LIST_CONTAINER;
 
 
@@ -1258,11 +1262,23 @@
             }
         };
 
-        var leading_zero = function leading_zero(number) {
+        var leadingZero = function leadingZero(number) {
             if (typeof number == 'number') {
                 number = number.toString();
             }
             return number.trim().length >= 2 ? number : '0' + number;
+        };
+
+        var destroy = function destroy() {
+            if (self.createFormModal) {
+                self.createFormModal.destroy();
+            }
+            if (self.editFormModal) {
+                self.editFormModal.destroy();
+            }
+            $(self.el).children().remove().call(function () {
+                $(self.el).html('');
+            });
         };
     }();
 
@@ -1281,56 +1297,68 @@
         return this;
     };
 })(jQuery);
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var CPEventFormModal = function () {
-    _createClass(CPEventFormModal, [{
-        key: 'SELECTORS',
-
-        /**
-         * selectors used within this class
-         */
-        value: function SELECTORS() {
-            return {
-                BODY: 'body',
-                FORM: '.' + this.PREFIX + '-form',
-                FIELDSET: 'fieldset',
-                MODAL: '.' + this.PREFIX + '-modal',
-                BUTTON: '.' + this.PREFIX + '-button',
-                TITLE: 'input[name="event-title"]',
-                END_TIME: 'input[name="end-time"]',
-                END_DATE: 'input[name="end-date"]',
-                START_DATE: 'input[name="start-date"]',
-                START_TIME: 'input[name="start-time"]',
-                ERROR_CONTAINER: '.' + this.PREFIX + '-error-container'
-            };
-        }
-
-        /**
-         * class names used within the component
-         */
-
-    }, {
-        key: 'CLASSNAMES',
-        value: function CLASSNAMES() {
-            return {
-                SHOW: 'show',
-                CANCEL: 'cancel',
-                SAVE: 'save',
-                DELETE: 'delete'
-            };
-        }
-    }]);
-
+    /**
+     * selectors used within this class
+     */
     function CPEventFormModal(uniqueID, options) {
+        var _this = this;
+
         _classCallCheck(this, CPEventFormModal);
+
+        Object.defineProperty(this, 'SELECTORS', {
+            enumerable: true,
+            writable: true,
+            value: function value() {
+                return {
+                    BODY: 'body',
+                    FORM: '.' + _this.PREFIX + '-form',
+                    FIELDSET: 'fieldset',
+                    MODAL: '.' + _this.PREFIX + '-modal',
+                    BUTTON: '.' + _this.PREFIX + '-button',
+                    TITLE: 'input[name="event-title"]',
+                    END_TIME: 'input[name="end-time"]',
+                    END_DATE: 'input[name="end-date"]',
+                    START_DATE: 'input[name="start-date"]',
+                    START_TIME: 'input[name="start-time"]',
+                    ERROR_CONTAINER: '.' + _this.PREFIX + '-error-container'
+                };
+            }
+        });
+        Object.defineProperty(this, 'CLASSNAMES', {
+            enumerable: true,
+            writable: true,
+            value: function value() {
+                return {
+                    SHOW: 'show',
+                    CANCEL: 'cancel',
+                    SAVE: 'save',
+                    DELETE: 'delete'
+                };
+            }
+        });
+        Object.defineProperty(this, 'PREFIX', {
+            enumerable: true,
+            writable: true,
+            value: 'cp-ef'
+        });
+        Object.defineProperty(this, 'fields', {
+            enumerable: true,
+            writable: true,
+            value: []
+        });
 
         this.uniqueID = uniqueID;
         this.id = null;
         this.modal = null;
-        this.PREFIX = 'cp-ef';
         this.options = $.extend({
             url: null,
             edit: false,
@@ -1338,16 +1366,20 @@ var CPEventFormModal = function () {
             onShown: null,
             onWillHide: null,
             onHidden: null,
-            onDelete: null
+            onDelete: null,
+            fieldsList: []
         }, options);
 
         // bind methods
         this.html = this.html.bind(this);
         this.render = this.render.bind(this);
-        this.SELECTORS = this.SELECTORS.bind(this);
-        this.CLASSNAMES = this.CLASSNAMES.bind(this);
         this.componentDidRender = this.componentDidRender.bind(this);
     }
+
+    /**
+     * class names used within the component
+     */
+
 
     _createClass(CPEventFormModal, [{
         key: 'componentDidRender',
@@ -1357,14 +1389,15 @@ var CPEventFormModal = function () {
             // reset/set listeners
             this.listeners();
             // initialize date pickers
-            this.initializePickers();
+            // this.initializePickers();
         }
     }, {
         key: 'render',
         value: function render() {
+            var _this2 = this;
+
             // required selectors
             var _SELECTORS = this.SELECTORS(),
-                MODAL = _SELECTORS.MODAL,
                 BODY = _SELECTORS.BODY;
 
             // select modal
@@ -1378,15 +1411,77 @@ var CPEventFormModal = function () {
             }
 
             // render new form
-            $(this.html()).attr('id', this.uniqueID).appendTo(BODY);
-
-            // fire component did render
-            this.componentDidRender();
+            $(this.html().trim()).attr('id', this.uniqueID).appendTo(BODY).call(function () {
+                return _this2.renderFields();
+            }).call(function () {
+                return _this2.componentDidRender();
+            });
         }
     }, {
         key: 'html',
         value: function html() {
-            return "<div class='" + this.PREFIX + "-modal'>" + "<div class='" + this.PREFIX + "-backdrop'>&nbsp;</div>" + "<div class='" + this.PREFIX + "-content'>" + "<div class='" + this.PREFIX + "-dialog'>" + "<form action='javascript:;' class='" + this.PREFIX + "-form' method='POST'>" + "<fieldset>" + "<p class='" + this.PREFIX + "-error " + this.PREFIX + "-error-container'></p>" + "<div class='" + this.PREFIX + "-group'>" + "<div class='" + this.PREFIX + "-control'>" + "<input type='text' name='event-title' class='" + this.PREFIX + "-title' placeholder='Event title...' />" + "</div>" + "</div>" + "<div class='" + this.PREFIX + "-group'>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='start-date'>Start Date</label>" + "<input type='text' name='start-date' placeholder='MM/DD/YYYY' autocomplete='off' />" + "</div>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='end-date'>End Date</label>" + "<input type='text' name='end-date' placeholder='MM/DD/YYYY' autocomplete='off' />" + "</div>" + "</div>" + "<div class='" + this.PREFIX + "-group'>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='start-time'>Start Time</label>" + "<input type='time' name='start-time' placeholder='hh:mm AM/PM' />" + "</div>" + "<div class='" + this.PREFIX + "-control'>" + "<label for='end-time'>End Time</label>" + "<input type='time' name='end-time' placeholder='hh:mm AM/PM' />" + "</div>" + "</div>" + "<div class='" + this.PREFIX + "-actions'>" + this.delete_button() + "<button type='button' class='" + this.PREFIX + "-button cancel'>Cancel</button>" + "<button type='submit' class='" + this.PREFIX + "-button save'>Save</button>" + "</div>" + "</fieldset>" + "</form>" + "</div>" + "</div>" + "</div>";
+            var _this3 = this;
+
+            return '<div class="' + this.PREFIX + '-modal">\n            <div class="' + this.PREFIX + '-backdrop">&nbsp;</div>\n            <div class="' + this.PREFIX + '-content">\n                <div class="' + this.PREFIX + '-dialog">\n                    <form action="javascript:;" class="' + this.PREFIX + '-form" method="POST">\n                        <fieldset>\n                           ' + (this.options.fieldsList.constructor == Array ? this.options.fieldsList.map(function (group, index) {
+                return _this3.renderFieldsList(group, index);
+            }).join('') : null) + '\n                            <div class="' + this.PREFIX + '-actions">\n                                ' + (this.options.editting ? '<button type="button" \n                                        class="' + this.PREFIX + '-button delete"\n                                    > Delete </button>' : "") + '\n                                <button type="button" class="' + this.PREFIX + '-button ' + this.CLASSNAMES().CANCEL + '">Cancel</button>\n                                <button type="submit" class="' + this.PREFIX + '-button ' + this.CLASSNAMES().SAVE + '">Save</button>\n                            </div>\n                        </fieldset>\n                    </form>\n                </div>\n            </div>\n        </div>';
+        }
+    }, {
+        key: 'renderFieldsList',
+        value: function renderFieldsList(group, index) {
+            var _this4 = this;
+
+            if (group.constructor != Array) return null;
+            var parent = '' + this.uniqueID + this.PREFIX + '-group' + index;
+            return ('\n            <div\n                class="' + this.PREFIX + '-group"\n            >\n                ' + group.map(function (field, index) {
+                return _this4.makeField(field, parent, index);
+            }).join("") + '\n            </div>\n        ').trim();
+        }
+    }, {
+        key: 'makeField',
+        value: function makeField(field, parent, index) {
+            var id = '' + parent + this.PREFIX + '-group-item' + index;
+            var container = '#' + id;
+            if (field && (typeof field === 'undefined' ? 'undefined' : _typeof(field)) == 'object' && field.constructor == Object && Object.keys(field)) {
+                // create field based on type
+                switch (field.type) {
+                    case 'text':
+                        this.fields.push(new CPFText(container, _extends({}, field)));
+                        break;
+                    case 'date':
+                        this.fields.push(new CPFDate(container, _extends({}, field)));
+                        break;
+                    case 'select':
+                        this.fields.push(new CPFSelect(container, _extends({}, field)));
+                        break;
+                    case 'time':
+                        this.fields.push(new CPFTime(container, _extends({}, field)));
+                        break;
+                }
+            }
+            return '<div class="' + this.PREFIX + '-group-item" id="' + id + '"></div>';
+        }
+    }, {
+        key: 'fieldHtmlType',
+        value: function fieldHtmlType(type) {
+            switch (type) {
+                case 'select':
+                    return 'select';
+                case 'long-text':
+                    return 'textarea';
+                default:
+                    return 'input';
+            }
+        }
+    }, {
+        key: 'renderFields',
+        value: function renderFields() {
+            if (!this.fields || this.fields.constructor != Array) {
+                return;
+            }
+            for (var i = 0; i < this.fields.length; i++) {
+                this.fields[i].render();
+            }
         }
     }, {
         key: 'listeners',
@@ -1397,14 +1492,14 @@ var CPEventFormModal = function () {
             // listen for button clicks
 
 
-            this.modal.find(BUTTON).off('click', this.handle_button_click.bind(this));
-            this.modal.find(BUTTON).on('click', this.handle_button_click.bind(this));
+            this.modal.find(BUTTON).off('click', this.handleButtonClick.bind(this));
+            this.modal.find(BUTTON).on('click', this.handleButtonClick.bind(this));
             // listen for form submit
-            this.modal.find(FORM).off('submit', this.handle_form_submit.bind(this));
-            this.modal.find(FORM).on('submit', this.handle_form_submit.bind(this));
+            this.modal.find(FORM).off('submit', this.handleFormSubmit.bind(this));
+            this.modal.find(FORM).on('submit', this.handleFormSubmit.bind(this));
             // check for when for transition ends
-            this.modal.find(FORM).off('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handle_form_transition_end.bind(this));
-            this.modal.find(FORM).on('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handle_form_transition_end.bind(this));
+            this.modal.find(FORM).off('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handleFormTransitionEnd.bind(this));
+            this.modal.find(FORM).on('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handleFormTransitionEnd.bind(this));
         }
     }, {
         key: 'initializePickers',
@@ -1423,8 +1518,8 @@ var CPEventFormModal = function () {
             this.modal.find(END_DATE).datepicker();
         }
     }, {
-        key: 'handle_button_click',
-        value: function handle_button_click(ev) {
+        key: 'handleButtonClick',
+        value: function handleButtonClick(ev) {
             var _CLASSNAMES = this.CLASSNAMES(),
                 CANCEL = _CLASSNAMES.CANCEL,
                 SAVE = _CLASSNAMES.SAVE,
@@ -1435,41 +1530,33 @@ var CPEventFormModal = function () {
                 this.hide();
             }
             if (el.hasClass(DELETE)) {
-                this.confirm_delete();
+                this.confirmDelete();
             }
         }
     }, {
-        key: 'handle_form_submit',
-        value: function handle_form_submit(ev) {
+        key: 'handleFormSubmit',
+        value: function handleFormSubmit(ev) {
             ev.preventDefault();
 
             if (this.validate()) {
                 // show validation errors
-                this.show_validation_error();
+                this.showValidationError();
                 return;
             }
 
             // hide validation error
-            this.hide_validation_error();
+            this.hideValidationError();
 
             // save changes
             this.save();
         }
     }, {
-        key: 'delete_button',
-        value: function delete_button() {
-            if (this.options.editting) {
-                return "<button type='button' class='" + this.PREFIX + "-button delete'>Delete</button>";
-            }
-            return '';
-        }
-    }, {
-        key: 'handle_form_transition_end',
-        value: function handle_form_transition_end(ev) {}
+        key: 'handleFormTransitionEnd',
+        value: function handleFormTransitionEnd(ev) {}
     }, {
         key: 'show',
         value: function show(data, id) {
-            if (!this.has_rendered()) return;
+            if (!this.hasRendered()) return;
             // setTimeout(this.reset.bind(this, data), 1000);
             this.reset(data);
             this.id = id ? id : null;
@@ -1482,8 +1569,8 @@ var CPEventFormModal = function () {
             }
         }
     }, {
-        key: 'confirm_delete',
-        value: function confirm_delete() {
+        key: 'confirmDelete',
+        value: function confirmDelete() {
             if (confirm("Are you sure you want to delete, this event?")) ;
             {
                 this.delete();
@@ -1492,7 +1579,7 @@ var CPEventFormModal = function () {
     }, {
         key: 'hide',
         value: function hide() {
-            if (!this.has_rendered()) return;
+            if (!this.hasRendered()) return;
 
             var _CLASSNAMES3 = this.CLASSNAMES(),
                 SHOW = _CLASSNAMES3.SHOW;
@@ -1502,47 +1589,38 @@ var CPEventFormModal = function () {
             }
         }
     }, {
-        key: 'has_rendered',
-        value: function has_rendered() {
+        key: 'hasRendered',
+        value: function hasRendered() {
             return this.modal != null && this.modal != undefined && this.modal.length > 0;
         }
     }, {
         key: 'reset',
         value: function reset(data) {
-            var _SELECTORS4 = this.SELECTORS(),
-                START_DATE = _SELECTORS4.START_DATE,
-                END_DATE = _SELECTORS4.END_DATE,
-                START_TIME = _SELECTORS4.START_TIME,
-                END_TIME = _SELECTORS4.END_TIME,
-                TITLE = _SELECTORS4.TITLE;
-            // prep form data
+            // 
+            var field = void 0;
 
+            // hide validation error
+            this.hideValidationError();
 
-            var startDate = data.startDate ? this.format_date(data.startDate) : '';
-            var endDate = data.endDate ? this.format_date(data.endDate) : '';
-            var startTime = data.startTime || '';
-            var endTime = data.endTime || '';
-            var title = data.title || '';
-            // update form data
-            this.modal.find(START_DATE).val(startDate);
-            this.modal.find(END_DATE).val(endDate);
-            this.modal.find(START_TIME).val(startTime);
-            this.modal.find(END_TIME).val(endTime);
-            this.modal.find(TITLE).val(title);
-            // hode validation error
-            this.hide_validation_error();
+            // set the field values
+            for (var i = 0; i < this.fields.length; i++) {
+                field = this.fields[i];
+                if (data.hasOwnProperty(field.name)) {
+                    field.setValue(data[field.name]);
+                }
+            }
         }
     }, {
-        key: 'format_date',
-        value: function format_date(date) {
+        key: 'formatDate',
+        value: function formatDate(date) {
             var year = date.getFullYear();
             var month = date.getMonth() + 1;
             var day = date.getDate();
-            return this.leading_zero(month) + '/' + this.leading_zero(day) + '/' + year;
+            return this.leadingZero(month) + '/' + this.leadingZero(day) + '/' + year;
         }
     }, {
-        key: 'leading_zero',
-        value: function leading_zero(data) {
+        key: 'leadingZero',
+        value: function leadingZero(data) {
             // return zero if data type is niether string nur number
             if (typeof data != 'string' && typeof data != 'number') return "0";
 
@@ -1558,33 +1636,33 @@ var CPEventFormModal = function () {
             if (!this.modal) {
                 return 'An unknow error has occured.';
             }
-            var form_data = this.get_form_data();
+            var formData = this.getFormData();
 
-            // validate title
-            if (!form_data.title || form_data.title.length < 1) return 'Please enter and event title.';
+            // // validate title
+            // if (!formData.title || formData.title.length < 1) return 'Please enter and event title.';
 
-            // validate start date
-            if (!form_data.startDate || form_data.startDate.length < 1) return 'Please select a start date.';
-            if (new Date(form_data.startDate) == 'Invalid Date') return 'Start date is not a valid date.';
+            // // validate start date
+            // if (!formData.startDate || formData.startDate.length < 1) return 'Please select a start date.';
+            // if (new Date(formData.startDate) == 'Invalid Date') return 'Start date is not a valid date.';
 
-            // validate end date
-            if (!form_data.endDate || form_data.endDate.length < 1) return 'Please select an end date.';
-            if (new Date(form_data.endDate) == 'Invalid Date') return 'End date is not a valid date.';
+            // // validate end date
+            // if (!formData.endDate || formData.endDate.length < 1) return 'Please select an end date.';
+            // if (new Date(formData.endDate) == 'Invalid Date') return 'End date is not a valid date.';
 
-            // validate start time
-            if (!form_data.startTime || form_data.startTime.length < 1) return 'Please specify a start time.';
-            if (!this.time_regex(form_data.startTime)) return 'Start time invalid. E.g hh:mm AM/PM.';
+            // // validate start time
+            // if (!formData.startTime || formData.startTime.length < 1) return 'Please specify a start time.';
+            // if (!this.timeRegex(formData.startTime)) return 'Start time invalid. E.g hh:mm AM/PM.';
 
-            // validate end time
-            if (!form_data.endTime || form_data.endTime.length < 1) return 'Please specify a end time.';
-            if (!this.time_regex(form_data.endTime)) return 'End time invalid. E.g hh:mm AM/PM.';
+            // // validate end time
+            // if (!formData.endTime || formData.endTime.length < 1) return 'Please specify a end time.';
+            // if (!this.timeRegex(formData.endTime)) return 'End time invalid. E.g hh:mm AM/PM.';
 
             // default is false
             return false;
         }
     }, {
-        key: 'show_validation_error',
-        value: function show_validation_error() {
+        key: 'showValidationError',
+        value: function showValidationError() {
             // get validation error
             var error = this.validate();
 
@@ -1593,9 +1671,9 @@ var CPEventFormModal = function () {
 
             // get required selectors and class names
 
-            var _SELECTORS5 = this.SELECTORS(),
-                FORM = _SELECTORS5.FORM,
-                ERROR_CONTAINER = _SELECTORS5.ERROR_CONTAINER;
+            var _SELECTORS4 = this.SELECTORS(),
+                FORM = _SELECTORS4.FORM,
+                ERROR_CONTAINER = _SELECTORS4.ERROR_CONTAINER;
 
             var _CLASSNAMES4 = this.CLASSNAMES(),
                 SHOW = _CLASSNAMES4.SHOW;
@@ -1603,22 +1681,24 @@ var CPEventFormModal = function () {
             // get error container
 
 
-            var error_container = this.modal.find(FORM).find(ERROR_CONTAINER);
-            if (!error_container || error_container.length < 1) return;
+            var errorContainer = this.modal.find(FORM).find(ERROR_CONTAINER);
+            if (!errorContainer || errorContainer.length < 1) return;
 
             // change error text in view
-            error_container.text(error);
+            errorContainer.text(error);
 
             // make error container visible if not visible
-            if (!error_container.hasClass(SHOW)) error_container.addClass(SHOW);
+            if (!errorContainer.hasClass(SHOW)) {
+                errorContainer.addClass(SHOW);
+            }
         }
     }, {
-        key: 'hide_validation_error',
-        value: function hide_validation_error() {
+        key: 'hideValidationError',
+        value: function hideValidationError() {
             // get required selectors and class names
-            var _SELECTORS6 = this.SELECTORS(),
-                FORM = _SELECTORS6.FORM,
-                ERROR_CONTAINER = _SELECTORS6.ERROR_CONTAINER;
+            var _SELECTORS5 = this.SELECTORS(),
+                FORM = _SELECTORS5.FORM,
+                ERROR_CONTAINER = _SELECTORS5.ERROR_CONTAINER;
 
             var _CLASSNAMES5 = this.CLASSNAMES(),
                 SHOW = _CLASSNAMES5.SHOW;
@@ -1626,23 +1706,23 @@ var CPEventFormModal = function () {
             // get error container
 
 
-            var error_container = this.modal.find(FORM).find(ERROR_CONTAINER);
-            if (!error_container || error_container.length < 1) return;
+            var errorContainer = this.modal.find(FORM).find(ERROR_CONTAINER);
+            if (!errorContainer || errorContainer.length < 1) return;
 
             // change error text in view
-            error_container.text('');
+            errorContainer.text('');
 
             // make error container visible if not visible
-            if (error_container.hasClass(SHOW)) error_container.removeClass(SHOW);
+            if (errorContainer.hasClass(SHOW)) errorContainer.removeClass(SHOW);
         }
     }, {
         key: 'disable',
         value: function disable(state) {
             // get selectors
-            var _SELECTORS7 = this.SELECTORS(),
-                FORM = _SELECTORS7.FORM,
-                FIELDSET = _SELECTORS7.FIELDSET,
-                BUTTON = _SELECTORS7.BUTTON;
+            var _SELECTORS6 = this.SELECTORS(),
+                FORM = _SELECTORS6.FORM,
+                FIELDSET = _SELECTORS6.FIELDSET,
+                BUTTON = _SELECTORS6.BUTTON;
             // convert state to proper type
 
 
@@ -1652,42 +1732,33 @@ var CPEventFormModal = function () {
             this.modal.find(FORM).find(BUTTON).attr('disabled', state);
         }
     }, {
-        key: 'time_regex',
-        value: function time_regex(time) {
+        key: 'timeRegex',
+        value: function timeRegex(time) {
             if (typeof time != 'string') time = time + '';
             var regex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
             return regex.test(time);
         }
     }, {
-        key: 'get_form_data',
-        value: function get_form_data() {
-            var _SELECTORS8 = this.SELECTORS(),
-                START_DATE = _SELECTORS8.START_DATE,
-                END_DATE = _SELECTORS8.END_DATE,
-                START_TIME = _SELECTORS8.START_TIME,
-                END_TIME = _SELECTORS8.END_TIME,
-                TITLE = _SELECTORS8.TITLE;
+        key: 'getFormData',
+        value: function getFormData() {
+            var data = {};
+            for (var i = 0; i < this.fields.length; i++) {
+                data[this.fields[i].name] = this.fields[i].getValue();
+            }
             // get form values
-
-
-            return {
-                title: this.modal.find(TITLE).val(),
-                startDate: this.modal.find(START_DATE).val(),
-                endDate: this.modal.find(END_DATE).val(),
-                startTime: this.modal.find(START_TIME).val(),
-                endTime: this.modal.find(END_TIME).val()
-            };
+            return data;
         }
     }, {
         key: 'save',
         value: function save() {
             // get post url
-            var url = this.build_url();
+            var url = this.buildUrl();
             // stop if no url was specified
             if (url == null) return;
+            console.log(this.getFormData());
             // join default data and form data
-            var data = $.extend({}, this.options.data, this.get_form_data());
-            data = this.add_structs(data);
+            var data = $.extend({}, this.options.data, this.getFormData());
+            data = this.addStructs(data);
             // join default headers with custom headers
             var headers = $.extend({}, this.options.headers);
             // disable form
@@ -1698,11 +1769,11 @@ var CPEventFormModal = function () {
                 data: data,
                 headers: headers,
                 method: this.options.editting ? 'PUT' : 'POST'
-            }).done(this.save_done.bind(this)).fail(this.save_failed.bind(this));
+            }).done(this.saveDone.bind(this)).fail(this.saveFailed.bind(this));
         }
     }, {
-        key: 'save_done',
-        value: function save_done(response) {
+        key: 'saveDone',
+        value: function saveDone(response) {
             // fire onSave function if set
             if (typeof this.options.onSaved == 'function') this.options.onSaved();
 
@@ -1718,8 +1789,8 @@ var CPEventFormModal = function () {
             }, 800);
         }
     }, {
-        key: 'save_failed',
-        value: function save_failed(err) {
+        key: 'saveFailed',
+        value: function saveFailed(err) {
             // enable form
             this.disable(false);
             // get and display error message
@@ -1728,8 +1799,8 @@ var CPEventFormModal = function () {
             alert(message);
         }
     }, {
-        key: 'add_structs',
-        value: function add_structs(data) {
+        key: 'addStructs',
+        value: function addStructs(data) {
             if (this.options.requestStruct) {
                 var structs = JSON.parse(JSON.stringify(this.options.requestStruct));
                 for (var i in structs) {
@@ -1747,7 +1818,7 @@ var CPEventFormModal = function () {
         key: 'delete',
         value: function _delete() {
             // get post url
-            var url = this.build_url('delete');
+            var url = this.buildUrl('delete');
             // stop if no url was specified
             if (url == null) return;
             // join default data and form data
@@ -1762,11 +1833,11 @@ var CPEventFormModal = function () {
                 data: data,
                 headers: headers,
                 method: 'DELETE'
-            }).done(this.delete_done.bind(this)).fail(this.delete_failed.bind(this));
+            }).done(this.deleteDone.bind(this)).fail(this.deleteFailed.bind(this));
         }
     }, {
-        key: 'delete_done',
-        value: function delete_done(response) {
+        key: 'deleteDone',
+        value: function deleteDone(response) {
             // fire onSave function if set
             if (typeof this.options.onDelete == 'function') this.options.onDelete();
 
@@ -1782,8 +1853,8 @@ var CPEventFormModal = function () {
             }, 800);
         }
     }, {
-        key: 'delete_failed',
-        value: function delete_failed(err) {
+        key: 'deleteFailed',
+        value: function deleteFailed(err) {
             // enable form
             this.disable(false);
             // get and display error message
@@ -1792,8 +1863,8 @@ var CPEventFormModal = function () {
             alert(message);
         }
     }, {
-        key: 'build_url',
-        value: function build_url(deleteUrl) {
+        key: 'buildUrl',
+        value: function buildUrl(deleteUrl) {
             deleteUrl = deleteUrl ? true : false;
             if (!deleteUrl && this.options.url == null || deleteUrl && this.options.deleteUrl == null) return null;
             var url = deleteUrl ? JSON.parse(JSON.stringify(this.options.deleteUrl)) : JSON.parse(JSON.stringify(this.options.url));
@@ -1809,10 +1880,537 @@ var CPEventFormModal = function () {
             }
             return url;
         }
+    }, {
+        key: 'destroy',
+        value: function destroy() {
+            if (this.fields || this.fields.constructor == Array) {
+                for (var i = 0; i < this.fields.length; i++) {
+                    this.fields[i].destroy();
+                }
+            }
+            $(this.uniqueID).remove();
+        }
     }]);
 
     return CPEventFormModal;
 }();
+// class CPEventFormModal
+// {
+//     /**
+//      * selectors used within this class
+//      */
+//     SELECTORS() {
+//         return {
+//             BODY        : 'body',
+//             FORM        : '.'+this.PREFIX+'-form',
+//             FIELDSET    : 'fieldset',
+//             MODAL       : '.'+this.PREFIX+'-modal',
+//             BUTTON      : '.'+this.PREFIX+'-button',
+//             TITLE       : 'input[name="event-title"]',
+//             END_TIME    : 'input[name="end-time"]',
+//             END_DATE    : 'input[name="end-date"]',
+//             START_DATE  : 'input[name="start-date"]',
+//             START_TIME  : 'input[name="start-time"]',
+//             ERROR_CONTAINER: '.'+this.PREFIX+'-error-container',
+//         }
+//     }
+
+//     /**
+//      * class names used within the component
+//      */
+//     CLASSNAMES() {
+//         return {
+//             SHOW    : 'show',
+//             CANCEL  : 'cancel',
+//             SAVE    : 'save',
+//             DELETE  : 'delete',
+//         };
+//     }
+
+//     constructor(uniqueID, options)
+//     {
+//         this.uniqueID = uniqueID;
+//         this.id = null;
+//         this.modal = null;
+//         this.PREFIX = 'cp-ef';
+//         this.options = $.extend({
+//             url: null,
+//             edit: false,
+//             onWillShow: null,
+//             onShown: null,
+//             onWillHide: null,
+//             onHidden: null,
+//             onDelete: null
+//         }, options);
+
+//         // bind methods
+//         this.html = this.html.bind(this);
+//         this.render = this.render.bind(this);
+//         this.SELECTORS = this.SELECTORS.bind(this);
+//         this.CLASSNAMES = this.CLASSNAMES.bind(this);
+//         this.componentDidRender = this.componentDidRender.bind(this);
+//     }
+
+//     componentDidRender()
+//     {
+//         // reset/set modal
+//         this.modal = $('#'+this.uniqueID);
+//         // reset/set listeners
+//         this.listeners();
+//         // initialize date pickers
+//         this.initializePickers();
+//     }
+
+//     render()
+//     {
+//         // required selectors
+//         var {MODAL, BODY} = this.SELECTORS();
+
+//         // select modal
+//         var modal = $('#'+this.uniqueID);
+
+//         // remove modal if exists
+//         if(modal.length > 0)
+//         { modal.remove(); }
+
+//         // render new form
+//         $(this.html()).attr('id', this.uniqueID).appendTo(BODY);
+
+//        // fire component did render
+//        this.componentDidRender();
+//     }
+
+//     html()
+//     {
+//         return ("<div class='"+this.PREFIX+"-modal'>"+
+//             "<div class='"+this.PREFIX+"-backdrop'>&nbsp;</div>"+
+//             "<div class='"+this.PREFIX+"-content'>"+
+//                 "<div class='"+this.PREFIX+"-dialog'>"+
+//                     "<form action='javascript:;' class='"+this.PREFIX+"-form' method='POST'>"+
+//                         "<fieldset>"+
+//                             "<p class='"+this.PREFIX+"-error "+this.PREFIX+"-error-container'></p>"+
+//                             "<div class='"+this.PREFIX+"-group'>"+
+//                                 "<div class='"+this.PREFIX+"-control'>"+
+//                                     "<input type='text' name='event-title' class='"+this.PREFIX+"-title' placeholder='Event title...' />"+
+//                                 "</div>"+
+//                             "</div>"+
+//                             "<div class='"+this.PREFIX+"-group'>"+
+//                                 "<div class='"+this.PREFIX+"-control'>"+
+//                                     "<label for='start-date'>Start Date</label>"+
+//                                     "<input type='text' name='start-date' placeholder='MM/DD/YYYY' autocomplete='off' />"+
+//                                 "</div>"+
+//                                 "<div class='"+this.PREFIX+"-control'>"+
+//                                     "<label for='end-date'>End Date</label>"+
+//                                     "<input type='text' name='end-date' placeholder='MM/DD/YYYY' autocomplete='off' />"+
+//                                 "</div>"+
+//                             "</div>"+
+//                             "<div class='"+this.PREFIX+"-group'>"+
+//                                 "<div class='"+this.PREFIX+"-control'>"+
+//                                     "<label for='start-time'>Start Time</label>"+
+//                                     "<input type='time' name='start-time' placeholder='hh:mm AM/PM' />"+
+//                                 "</div>"+
+//                                 "<div class='"+this.PREFIX+"-control'>"+
+//                                     "<label for='end-time'>End Time</label>"+
+//                                     "<input type='time' name='end-time' placeholder='hh:mm AM/PM' />"+
+//                                 "</div>"+
+//                             "</div>"+
+//                             "<div class='"+this.PREFIX+"-actions'>"+
+//                                 this.delete_button()+
+//                                 "<button type='button' class='"+this.PREFIX+"-button cancel'>Cancel</button>"+
+//                                 "<button type='submit' class='"+this.PREFIX+"-button save'>Save</button>"+
+//                             "</div>"+
+//                         "</fieldset>"+
+//                     "</form>"+
+//                 "</div>"+
+//             "</div>"+
+//         "</div>");
+//     }
+
+//     listeners()
+//     {
+//         var {BUTTON, FORM} = this.SELECTORS();
+//         // listen for button clicks
+//         this.modal.find(BUTTON).off('click', this.handle_button_click.bind(this));
+//         this.modal.find(BUTTON).on('click', this.handle_button_click.bind(this));
+//         // listen for form submit
+//         this.modal.find(FORM).off('submit', this.handle_form_submit.bind(this));
+//         this.modal.find(FORM).on('submit', this.handle_form_submit.bind(this));
+//         // check for when for transition ends
+//         this.modal.find(FORM).off('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handle_form_transition_end.bind(this));
+//         this.modal.find(FORM).on('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handle_form_transition_end.bind(this));
+//     }
+
+//     initializePickers()
+//     {
+//         var {START_DATE, END_DATE} = this.SELECTORS();
+//         // initialize start date picker
+//         this.modal.find(START_DATE).datepicker('destroy');
+//         this.modal.find(START_DATE).datepicker();
+
+//         // initialize end date picker
+//         this.modal.find(END_DATE).datepicker('destroy');
+//         this.modal.find(END_DATE).datepicker();
+//     }
+
+//     handle_button_click(ev)
+//     {
+//         var {CANCEL, SAVE, DELETE} = this.CLASSNAMES();
+//         var el = $(ev.currentTarget);
+//         if(el.hasClass(CANCEL))
+//         {
+//             this.hide();
+//         }
+//         if(el.hasClass(DELETE))
+//         {
+//             this.confirm_delete();
+//         }
+//     }
+
+//     handle_form_submit(ev)
+//     {
+//         ev.preventDefault();
+
+//         if(this.validate())
+//         {
+//             // show validation errors
+//             this.show_validation_error();
+//             return;
+//         }
+
+//         // hide validation error
+//         this.hide_validation_error();
+
+//         // save changes
+//         this.save();
+//     }
+
+//     delete_button()
+//     {
+//         if(this.options.editting)
+//         {
+//             return "<button type='button' class='"+this.PREFIX+"-button delete'>Delete</button>"
+//         }
+//         return '';
+//     }
+
+//     handle_form_transition_end(ev)
+//     {
+
+//     }
+
+//     show(data, id)
+//     {
+//         if(!this.has_rendered()) return;
+//         // setTimeout(this.reset.bind(this, data), 1000);
+//         this.reset(data);
+//         this.id = id ? id : null;
+//         var {SHOW} = this.CLASSNAMES();
+//         if(!this.modal.hasClass(SHOW))
+//         {
+//             this.modal.addClass(SHOW);
+//         }
+//     }
+
+//     confirm_delete()
+//     {
+//         if(confirm("Are you sure you want to delete, this event?"));
+//         {
+//             this.delete();
+//         }
+//     }
+
+//     hide()
+//     {
+//         if(!this.has_rendered()) return;
+//         var {SHOW} = this.CLASSNAMES();
+//         if(this.modal.hasClass(SHOW))
+//         {
+//             this.modal.removeClass(SHOW);
+//         }
+//     }
+
+//     has_rendered()
+//     {
+//         return this.modal != null && this.modal != undefined && this.modal.length > 0;
+//     }
+
+//     reset(data)
+//     {
+//         var {START_DATE, END_DATE, START_TIME, END_TIME, TITLE} = this.SELECTORS();
+//         // prep form data
+//         var startDate = data.startDate ? this.format_date(data.startDate) : '';
+//         var endDate = data.endDate ? this.format_date(data.endDate) : '';
+//         var startTime = data.startTime || '';
+//         var endTime = data.endTime || '';
+//         var title = data.title || '';
+//         // update form data
+//         this.modal.find(START_DATE).val(startDate);
+//         this.modal.find(END_DATE).val(endDate);
+//         this.modal.find(START_TIME).val(startTime);
+//         this.modal.find(END_TIME).val(endTime);
+//         this.modal.find(TITLE).val(title);
+//         // hode validation error
+//         this.hide_validation_error();
+//     }
+
+//     format_date(date)
+//     {
+//         var year = date.getFullYear();
+//         var month = (date.getMonth() + 1);
+//         var day = date.getDate();
+//         return this.leading_zero(month)+'/'+this.leading_zero(day)+'/'+year;
+//     }
+
+//     leading_zero(data)
+//     {
+//         // return zero if data type is niether string nur number
+//         if(typeof data != 'string' && typeof data != 'number')  return "0";
+
+//         // convert data to string if data is a number
+//         if(typeof data == 'number') data = data.toString();
+
+//         // return data with zero prepended to it
+//         return data.length > 1 ? data : "0"+data;
+//     }
+
+//     validate()
+//     {
+//         if(!this.modal){ return 'An unknow error has occured.'; }
+//         var form_data = this.get_form_data();
+
+//         // validate title
+//         if(!form_data.title || form_data.title.length < 1) return 'Please enter and event title.';
+
+//         // validate start date
+//         if(!form_data.startDate || form_data.startDate.length < 1) return 'Please select a start date.';
+//         if( new Date(form_data.startDate) == 'Invalid Date' ) return 'Start date is not a valid date.';
+
+//         // validate end date
+//         if(!form_data.endDate || form_data.endDate.length < 1) return 'Please select an end date.';
+//         if( new Date(form_data.endDate) == 'Invalid Date' ) return 'End date is not a valid date.';
+
+//         // validate start time
+//         if(!form_data.startTime || form_data.startTime.length < 1) return 'Please specify a start time.';
+//         if( !this.time_regex(form_data.startTime) ) return 'Start time invalid. E.g hh:mm AM/PM.';
+
+//         // validate end time
+//         if(!form_data.endTime || form_data.endTime.length < 1) return 'Please specify a end time.';
+//         if( !this.time_regex(form_data.endTime) ) return 'End time invalid. E.g hh:mm AM/PM.';
+
+//         // default is false
+//         return false;
+//     }
+
+//     show_validation_error()
+//     {
+//         // get validation error
+//         var error = this.validate();
+
+//         // stop if there is no validation error
+//         if(!error) return;
+
+//         // get required selectors and class names
+//         var {FORM, ERROR_CONTAINER} = this.SELECTORS();
+//         var {SHOW} = this.CLASSNAMES();
+
+//         // get error container
+//         var error_container = this.modal.find(FORM).find(ERROR_CONTAINER);
+//         if(!error_container || error_container.length < 1) return;
+
+//         // change error text in view
+//         error_container.text(error);
+
+//         // make error container visible if not visible
+//         if(!error_container.hasClass(SHOW)) error_container.addClass(SHOW);
+//     }
+
+//     hide_validation_error()
+//     {
+//         // get required selectors and class names
+//         var {FORM, ERROR_CONTAINER} = this.SELECTORS();
+//         var {SHOW} = this.CLASSNAMES();
+
+//         // get error container
+//         var error_container = this.modal.find(FORM).find(ERROR_CONTAINER);
+//         if(!error_container || error_container.length < 1) return;
+
+//         // change error text in view
+//         error_container.text('');
+
+//         // make error container visible if not visible
+//         if(error_container.hasClass(SHOW)) error_container.removeClass(SHOW);
+//     }
+
+//     disable(state)
+//     {
+//         // get selectors
+//         var {FORM, FIELDSET, BUTTON} = this.SELECTORS();
+//         // convert state to proper type
+//         state = state ? true : false;
+//         // toggle editable state
+//         this.modal.find(FORM).find(FIELDSET).attr('disabled', state);    
+//         this.modal.find(FORM).find(BUTTON).attr('disabled', state);
+//     }
+
+//     time_regex(time)
+//     {
+//         if(typeof time != 'string') time = time+'';
+//         var regex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+//         return regex.test(time);
+//     }
+
+//     get_form_data()
+//     {
+//         var {START_DATE, END_DATE, START_TIME, END_TIME, TITLE} = this.SELECTORS();
+//         // get form values
+//         return {
+//             title       : this.modal.find(TITLE).val(),
+//             startDate   : this.modal.find(START_DATE).val(),
+//             endDate     : this.modal.find(END_DATE).val(),
+//             startTime   : this.modal.find(START_TIME).val(),
+//             endTime     : this.modal.find(END_TIME).val()
+//         };
+//     }
+
+//     save()
+//     {
+//         // get post url
+//         var url = this.build_url();
+//         // stop if no url was specified
+//         if(url == null) return;
+//         // join default data and form data
+//         var data = $.extend({}, this.options.data, this.get_form_data());
+//         data = this.add_structs(data);
+//         // join default headers with custom headers
+//         var headers = $.extend({}, this.options.headers);
+//         // disable form
+//         this.disable(true);
+//         // make ajax post request and try to save new event
+//         $.ajax({
+//             url: this.options.url,
+//             data: data,
+//             headers: headers,
+//             method: this.options.editting ? 'PUT' : 'POST'
+//         }).done(this.save_done.bind(this)).fail(this.save_failed.bind(this));
+//     }
+
+//     save_done(response)
+//     {
+//         // fire onSave function if set
+//         if(typeof this.options.onSaved == 'function') this.options.onSaved();
+
+//         // create referenc for object instance
+//         var self = this;
+
+//         // delay modal hide and form enable action
+//         setTimeout(function(){
+//             // enable form
+//             self.disable(false);
+//             // hide modal
+//             self.hide();
+//         }, 800);
+//     }
+
+//     save_failed(err)
+//     {
+//         // enable form
+//         this.disable(false);
+//         // get and display error message
+//         var message = 'Failed to'+( this.options.editting ? ' save changes.' : ' save new event.' );
+//         var message = err.message && err.message.length > 0 ? err.message : message;
+//         alert(message);
+//     }
+
+//     add_structs(data)
+//     {
+//         if(this.options.requestStruct)
+//         {
+//             var structs = JSON.parse( JSON.stringify(this.options.requestStruct) );
+//             for(var i in structs)
+//             {
+//                 if(typeof structs[i] != 'string') continue;
+//                 if(typeof data[i] == 'undefined') continue;
+//                 if(typeof data[structs[i]] != 'undefined') continue;
+//                 data[structs[i]] = JSON.parse( JSON.stringify(data[i]) );
+//                 delete data[i];
+//             } 
+//         }
+
+//         return data;
+//     }
+
+//     delete()
+//     {
+//         // get post url
+//         var url = this.build_url('delete');
+//         // stop if no url was specified
+//         if(url == null) return;
+//         // join default data and form data
+//         var data = $.extend({}, this.options.data);
+//         // join default headers with custom headers
+//         var headers = $.extend({}, this.options.headers);
+//         // disable form
+//         this.disable(true);
+//         // make ajax post request and try to delete new event
+//         $.ajax({
+//             url: this.options.url,
+//             data: data,
+//             headers: headers,
+//             method: 'DELETE'
+//         }).done(this.delete_done.bind(this)).fail(this.delete_failed.bind(this));
+//     }
+
+//     delete_done(response)
+//     {
+//         // fire onSave function if set
+//         if(typeof this.options.onDelete == 'function') this.options.onDelete();
+
+//         // create referenc for object instance
+//         var self = this;
+
+//         // delay modal hide and form enable action
+//         setTimeout(function(){
+//             // enable form
+//             self.disable(false);
+//             // hide modal
+//             self.hide();
+//         }, 800);
+//     }
+
+//     delete_failed(err)
+//     {
+//         // enable form
+//         this.disable(false);
+//         // get and display error message
+//         var message = 'Could not delete event, please try again in a moment.';
+//         var message = err.message && err.message.length > 0 ? err.message : message;
+//         alert(message);
+//     }
+
+//     build_url(deleteUrl)
+//     {
+//         deleteUrl = deleteUrl ? true : false;
+//         if((!deleteUrl && this.options.url == null) || (deleteUrl && this.options.deleteUrl == null)) return null;
+//         var url = deleteUrl ? JSON.parse( JSON.stringify(this.options.deleteUrl) ) : JSON.parse( JSON.stringify(this.options.url) );
+//         var regex = new RegExp(/^(:id)$/, 'ig');
+//         if(this.options.editting)
+//         {
+//             if(regex.test(url))
+//             {
+//                 url = url.replace(regex, this.id);
+//             }
+//             else
+//             {
+//                 this.options.data = $.extend({}, this.options.data, {id: this.id});
+//             }
+//         }
+//         else
+//         {
+//             url = url;
+//         }
+//         return url;
+//     }
+// }
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2033,3 +2631,329 @@ var CPEvent = function () {
 
     return CPEvent;
 }();
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CPField = function () {
+    function CPField(container, props) {
+        _classCallCheck(this, CPField);
+
+        Object.defineProperty(this, "container", {
+            enumerable: true,
+            writable: true,
+            value: null
+        });
+        Object.defineProperty(this, "props", {
+            enumerable: true,
+            writable: true,
+            value: {}
+        });
+        Object.defineProperty(this, "prefix", {
+            enumerable: true,
+            writable: true,
+            value: "cp-ef"
+        });
+        Object.defineProperty(this, "id", {
+            enumerable: true,
+            writable: true,
+            value: null
+        });
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            writable: true,
+            value: null
+        });
+        Object.defineProperty(this, "state", {
+            enumerable: true,
+            writable: true,
+            value: {}
+        });
+        Object.defineProperty(this, "name", {
+            enumerable: true,
+            writable: true,
+            value: null
+        });
+        Object.defineProperty(this, "idAttribute", {
+            enumerable: true,
+            writable: true,
+            value: "data-cpf-id"
+        });
+        Object.defineProperty(this, "fieldSelector", {
+            enumerable: true,
+            writable: true,
+            value: null
+        });
+        Object.defineProperty(this, "containerSelector", {
+            enumerable: true,
+            writable: true,
+            value: null
+        });
+
+        this.container = container;
+        this.props = Object.assign({}, this.props, props);
+        var date = new Date();
+        this.id = "" + date.getTime() + Math.random() * 2000;
+        this.name = props.name || null;
+        this.fieldSelector = this.htmlType() + "[name=\"" + this.name + "\"]";
+        this.containerSelector = "[" + this.idAttribute + "=\"" + this.id + "\"]";
+    }
+
+    _createClass(CPField, [{
+        key: "render",
+        value: function render() {
+            $(this.container).call(this.handleWillRender.bind(this)).html(this.content().trim()).call(this.handleCompletedRender.bind(this));
+        }
+    }, {
+        key: "label",
+        value: function label() {
+            if (typeof this.props.label == 'string') {
+                return ("\n                <label \n                    for=\"" + this.props.name + "\"\n                >\n                    " + this.props.label + "\n                </label>\n            ").trim();
+            }
+            return null;
+        }
+    }, {
+        key: "placeholder",
+        value: function placeholder() {
+            if (typeof this.props.placeholder == 'string' && this.props.placeholder.trim().length > 0) {
+                return this.props.placeholder;
+            }
+            return null;
+        }
+    }, {
+        key: "handleWillRender",
+        value: function handleWillRender() {
+            if (typeof this.willRender == 'function') {
+                this.willRender();
+            }
+        }
+    }, {
+        key: "handleCompletedRender",
+        value: function handleCompletedRender() {
+            if (typeof this.completedRender == 'function') {
+                this.completedRender();
+            }
+        }
+    }, {
+        key: "setDefaultValue",
+        value: function setDefaultValue() {
+            // set default value on the form field
+            if (this.props.defaultValue != undefined) {
+                switch (this.type) {
+                    case 'text':
+                    case 'time':
+                        $(this.containerSelector).children("input[type=\"" + this.type + "\"]").val(this.props.defaultValue);
+                        break;
+                    case 'date':
+                        $(this.containerSelector).children('input[type="date"]').val(this.formatDate(this.props.defaultValue));
+                        break;
+                }
+            }
+        }
+    }, {
+        key: "formatDate",
+        value: function formatDate(date) {
+            date = new Date(date);
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            return year + "-" + this.leadingZero(month) + "-" + this.leadingZero(day);
+        }
+    }, {
+        key: "leadingZero",
+        value: function leadingZero(data) {
+            // return zero if data type is niether string nur number
+            if (typeof data != 'string' && typeof data != 'number') return "0";
+
+            // convert data to string if data is a number
+            if (typeof data == 'number') data = data.toString();
+
+            // return data with zero prepended to it
+            return data.length > 1 ? data : "0" + data;
+        }
+    }, {
+        key: "setState",
+        value: function setState(state, callback) {
+            var prevState = _extends({}, this.state);
+            this.state = Object.assign({}, prevState, state);
+            // fire callback if any was set
+            if (typeof callback == 'function') {
+                callback();
+            }
+            // fire component changed method
+            if (typeof this.componentChanged == 'function') {
+                this.componentChanged(prevState);
+                this.setDefaultValue();
+            }
+        }
+    }, {
+        key: "setValue",
+        value: function setValue(value) {
+            if (this.type == 'date') {
+                value = this.formatDate(value);
+            }
+
+            $(this.containerSelector).children(this.htmlType() + "[name=\"" + this.name + "\"]").val(value);
+        }
+    }, {
+        key: "getValue",
+        value: function getValue() {
+            return $(this.containerSelector).children(this.fieldSelector).val();
+        }
+    }, {
+        key: "htmlType",
+        value: function htmlType() {
+            switch (this.props.type) {
+                case 'long-text':
+                    return 'textarea';
+                case 'select':
+                    return 'select';
+                default:
+                    return 'input';
+            }
+        }
+    }, {
+        key: "destory",
+        value: function destory() {
+            $(this.containerSelector).remove();
+        }
+    }]);
+
+    return CPField;
+}();
+
+var AllowedCPFTypes = ['select', 'text', 'long-text', 'email', 'color-picker', 'date', 'time', 'image', 'number', 'phone', 'pdf', 'word-doc', 'spreadsheet', 'checkbox'];
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var CPFDate = function (_CPField) {
+    _inherits(CPFDate, _CPField);
+
+    function CPFDate(container, props) {
+        _classCallCheck(this, CPFDate);
+
+        var _this = _possibleConstructorReturn(this, (CPFDate.__proto__ || Object.getPrototypeOf(CPFDate)).call(this, container, props));
+
+        _this.type = 'date';
+        return _this;
+    }
+
+    _createClass(CPFDate, [{
+        key: "content",
+        value: function content() {
+            return "\n            <div class=\"" + this.prefix + "-control-group\" " + this.idAttribute + "=\"" + this.id + "\">\n                " + this.label() + "\n                <input \n                    type=\"date\"\n                    name=\"" + this.props.name + "\"\n                    autoComplete=\"off\"\n                    class=\"" + this.prefix + "-form-control\"\n                    " + (this.placeholder() ? "placeholder=\"" + this.placeholder() + "\"" : "DD/MM/YYYY") + "\n                />\n            </div>\n        ";
+        }
+    }]);
+
+    return CPFDate;
+}(CPField);
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var CPFSelect = function (_CPField) {
+    _inherits(CPFSelect, _CPField);
+
+    function CPFSelect(container, props) {
+        _classCallCheck(this, CPFSelect);
+
+        var _this = _possibleConstructorReturn(this, (CPFSelect.__proto__ || Object.getPrototypeOf(CPFSelect)).call(this, container, props));
+
+        _this.type = 'select';
+        return _this;
+    }
+
+    _createClass(CPFSelect, [{
+        key: 'content',
+        value: function content() {
+            var _this2 = this;
+
+            if (this.props.options.constructor != Object) {
+                return '';
+            }
+            var options = _extends({ "": this.placeholder() }, this.props.options);
+            var optionKeys = Object.keys(options);
+            return '\n            <div class="' + this.prefix + '-control-group" ' + this.idAttribute + '="' + this.id + '">\n                ' + this.label() + '\n                <select\n                    name="' + this.props.name + '"\n                    class="' + this.prefix + '-form-control"\n                >\n                    ' + optionKeys.map(function (key) {
+                return _this2.renderOptions(key, options[key]);
+            }).join("") + '\n                </select>\n            </div>\n        ';
+        }
+    }, {
+        key: 'renderOptions',
+        value: function renderOptions(value, label) {
+            return ('<option \n                    value="' + value + '"\n                    ' + (this.props.defaultValue == value ? "selected" : "") + '\n                >\n                    ' + label + '\n                </option>').trim();
+        }
+    }]);
+
+    return CPFSelect;
+}(CPField);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var CPFText = function (_CPField) {
+    _inherits(CPFText, _CPField);
+
+    function CPFText(container, props) {
+        _classCallCheck(this, CPFText);
+
+        var _this = _possibleConstructorReturn(this, (CPFText.__proto__ || Object.getPrototypeOf(CPFText)).call(this, container, props));
+
+        _this.type = 'text';
+        return _this;
+    }
+
+    _createClass(CPFText, [{
+        key: "content",
+        value: function content() {
+            return "\n            <div class=\"" + this.prefix + "-control-group\" " + this.idAttribute + "=\"" + this.id + "\">\n                " + this.label() + "\n                <input \n                    type=\"text\"\n                    name=\"" + this.props.name + "\"\n                    autoComplete=\"off\"\n                    class=\"" + this.prefix + "-form-control\"\n                    " + (this.placeholder() ? "placeholder=\"" + this.placeholder() + "\"" : "") + "\n                />\n            </div>\n        ";
+        }
+    }]);
+
+    return CPFText;
+}(CPField);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var CPFTime = function (_CPField) {
+    _inherits(CPFTime, _CPField);
+
+    function CPFTime(container, props) {
+        _classCallCheck(this, CPFTime);
+
+        var _this = _possibleConstructorReturn(this, (CPFTime.__proto__ || Object.getPrototypeOf(CPFTime)).call(this, container, props));
+
+        _this.type = 'time';
+        return _this;
+    }
+
+    _createClass(CPFTime, [{
+        key: "content",
+        value: function content() {
+            return "\n            <div class=\"" + this.prefix + "-control-group\" " + this.idAttribute + "=\"" + this.id + "\">\n                " + this.label() + "\n                <input \n                    type=\"time\"\n                    name=\"" + this.props.name + "\"\n                    autoComplete=\"off\"\n                    class=\"" + this.prefix + "-form-control\"\n                    " + (this.placeholder() ? "placeholder=\"" + this.placeholder() + "\"" : "") + "\n                />\n            </div>\n        ";
+        }
+    }]);
+
+    return CPFTime;
+}(CPField);

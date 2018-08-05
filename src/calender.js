@@ -6,7 +6,7 @@
     const NAME                         = 'CalendarPlugin';
     const PREFIX                       = 'cp';
     const DATA_KEY                     = 'calendar_plugin';
-    const EVENT_KEY                    = '.'+DATA_KEY;
+    const EVENT_KEY                    = `.${DATA_KEY}`;
     const DATA_API_KEY                 = '.data-api';
 
     /**
@@ -14,12 +14,12 @@
      * during life cycle of the plugin.
      */
     const EVENTS = {
-        REMOVE              : 'remove'+EVENT_KEY,
-        REMOVED             : 'removed'+EVENT_KEY,
-        LAUNCH              : 'launch'+EVENT_KEY,
-        LAUNCHED            : 'launched'+EVENT_KEY,
-        RELOAD              : 'reload'+EVENT_KEY,
-        RELOADED            : 'reloaded'+EVENT_KEY
+        REMOVE              : `remove${EVENT_KEY}`,
+        REMOVED             : `removed${EVENT_KEY}`,
+        LAUNCH              : `launch${EVENT_KEY}`,
+        LAUNCHED            : `launched${EVENT_KEY}`,
+        RELOAD              : `reload${EVENT_KEY}`,
+        RELOADED            : `reloaded${EVENT_KEY}`
     }
 
     /**
@@ -185,8 +185,8 @@
         var self = this;
         self.now = new Date();
         self.selection = [];
-        self.modal = null;
-        self.editModal = null;
+        self.createFormModal = null;
+        self.editFormModal = null;
         self.events = [];
         self.eventInstances = [];
         self.viewOptions = ['daily', 'weekly', 'monthly'];
@@ -217,7 +217,8 @@
                 creatRequest: null,
                 editRequest: null,
                 view: 'monthly',
-                hideViewOptions: false 
+                hideViewOptions: false,
+                form: []
             }, options);
 
             // configure seasons
@@ -232,7 +233,13 @@
                 self.settings.month = 1;
             }
 
+            setupForm();
+
             launch();
+
+            if(options == 'destroy'){
+                self.destroy();
+            }
             return self;
         }
 
@@ -242,58 +249,47 @@
             render();
 
             // create new event modal
-            self.modal = new CPEventFormModal('new-event'+self.now.getTime(), {
+            self.createFormModal = new CPEventFormModal('new-event'+self.now.getTime(), {
                 url: self.settings.createUrl || self.settings.url || null,
                 data: self.settings.data,
                 headers: self.settings.headers,
-                onSaved: refresh_calendar_events,
+                onSaved: refreshCalendarEvents,
                 requestStruct: self.settings.creatRequest || null,
+                fieldsList: self.settings.form
             });
-            self.modal.render();
+            self.createFormModal.render();
 
             // edit new event modal
-            self.editModal = new CPEventFormModal('edit-event'+self.now.getTime(), {
+            self.editFormModal = new CPEventFormModal('edit-event'+self.now.getTime(), {
                 editting: true,
                 url: self.settings.editUrl || self.settings.url || null,
                 deleteUrl: self.settings.deleteUrl || self.settings.url || null,
                 data: self.settings.data,
                 headers: self.settings.headers,
-                onSaved: refresh_calendar_events,
-                onDelete: refresh_calendar_events,
+                onSaved: refreshCalendarEvents,
+                onDelete: refreshCalendarEvents,
                 requestStruct: self.settings.editRequest || null,
+                fieldsList: self.settings.form
             });
-            self.editModal.render();
+            self.editFormModal.render();
 
         }
 
-        const render_OLD = function()
-        {
-            var html = '';
-            switch(self.settings.view)
-            {
-                case 'daily':
-                    html = daily_calendar();
-                break;
-                case 'weekly':
-                    html = weekly_calendar();
-                break;
-                case 'monthly':
-                    html = create_view( create_calendar() );
-                break;
+        setupForm = function(){
+            let { form } = self.settings;
+            let fields = {};
+            if(!form || form.constructor != Array){
+                return;
             }
-
-            if($(self.el).find(SELECTORS.CONTAINER).length > 0){
-                $(self.el).find(SELECTORS.CONTAINER).fadeOut(1, function(){
-                    $(self.el).html('');
-                    $( html ).hide().prependTo($(self.el)).fadeIn(1, function(){
-                        refresh_calendar_events();
-                    }).call(start);
-                });
-            }
-            else{
-                $( html ).hide().prependTo($(self.el)).fadeIn(1, function(){
-                    refresh_calendar_events();
-                }).call(start);
+            for(var i = 0; i < form.length; i++){
+                if(form[i] == undefined){ continue; }
+                if(form[i].constructor != Array){
+                    console.warn(`Form structure malformed at fields list ${i} form must have the following structure in order to render. Array<Array<object>>`);
+                    continue;
+                }
+                for(var j = 0; j < form[i].length; j++){
+                    fields[form[i][j]['name']] = {...form[i][j]};
+                }
             }
         }
 
@@ -303,45 +299,45 @@
             switch(self.settings.view)
             {
                 case 'daily':
-                    html = daily_calendar();
+                    html = dailyCalendar();
                 break;
                 case 'weekly':
-                    html = weekly_calendar();
+                    html = weeklyCalendar();
                 break;
                 case 'monthly':
-                    html = create_view( create_calendar() );
+                    html = createView( createCalendar() );
                 break;
             }
 
             $(self.el).html('');
             $( html ).prependTo($(self.el));
-            refresh_calendar_events();
+            refreshCalendarEvents();
             start();
         }
 
-        const weekly_calendar = function(){
+        const weeklyCalendar = function(){
             return "<div class='"+CLASSNAMES.CONTAINER+"' id='"+SELECTORS.CONTAINER_ID+"'>"+
-                render_header('weekly')+
+                renderHeader('weekly')+
                 "<table class='"+CLASSNAMES.CALENDAR+" weekly'  cellspacing='0' cellpadding='0'>"+
-                    "<thead>"+render_weekly_heading()+"</thead>"+
-                    "<tbody>"+render_weekly_body()+"</tbody>"+
+                    "<thead>"+renderWeeklyHeading()+"</thead>"+
+                    "<tbody>"+renderWeeklyBody()+"</tbody>"+
                 "</table>"+
-                render_add_menu()+
+                renderAddMenu()+
             "</div>";
         }
 
-        const daily_calendar = function(){
+        const dailyCalendar = function(){
             return "<div class='"+CLASSNAMES.CONTAINER+"' id='"+SELECTORS.CONTAINER_ID+"'>"+
-                render_header('daily')+
+                renderHeader('daily')+
                 "<table class='"+CLASSNAMES.CALENDAR+" daily'  cellspacing='0' cellpadding='0'>"+
-                    "<thead>"+render_daily_heading()+"</thead>"+
-                    "<tbody>"+render_daily_body()+"</tbody>"+
+                    "<thead>"+renderDailyHeading()+"</thead>"+
+                    "<tbody>"+renderDailyBody()+"</tbody>"+
                 "</table>"+
-                render_add_menu()+
+                renderAddMenu()+
             "</div>";
         }
 
-        const render_daily_heading = function()
+        const renderDailyHeading = function()
         {
             var heading = '<tr class="'+CLASSNAMES.MONTH_HEADING+'">'+
                             '<th>Time</th>'+
@@ -350,7 +346,7 @@
             return heading;
         }
 
-        const render_daily_body = function()
+        const renderDailyBody = function()
         {
             var hours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
                 body = '', amPm;
@@ -358,8 +354,8 @@
             for(var i = 0; i < hours.length; i++){
                 amPm = i >= 12 ? 'PM' : 'AM';
                 body += `<tr class="${CLASSNAMES.WEEK_ROW} daily">
-                            <td>${leading_zero(hours[i])} ${amPm}</td>
-                            <td class="${CLASSNAMES.DATE_CELL} ${CLASSNAMES.DATE_DAY}" data-date="${moment(dailyDate.format(`YYYY-MM-DD ${leading_zero(hours[i])}:00:00`)).get('time')}">
+                            <td>${leadingZero(hours[i])} ${amPm}</td>
+                            <td class="${CLASSNAMES.DATE_CELL} ${CLASSNAMES.DATE_DAY}" data-date="${moment(dailyDate.format(`YYYY-MM-DD ${leadingZero(hours[i])}:00:00`)).get('time')}">
                                 <div class="${CLASSNAMES.DATE_CELL_CONTENT}"></div>
                             </td>
                         </tr>`;
@@ -367,7 +363,7 @@
             return body;
         }
 
-        const render_weekly_heading = function()
+        const renderWeeklyHeading = function()
         {
             var heading = '<tr class="'+CLASSNAMES.MONTH_HEADING+'"><th>Time</th>';
             for(var i = weekStart.get('time'); i <= weekEnd.get('time'); i = i+86400000)
@@ -378,7 +374,7 @@
             return heading;
         }
 
-        const render_weekly_body = function()
+        const renderWeeklyBody = function()
         {
             var hours = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
                 body = '', 
@@ -387,11 +383,11 @@
 
             for(var i = 0; i < hours.length; i++){
                 amPm = i >= 12 ? 'PM' : 'AM';
-                time = leading_zero(hours[i])+' '+amPm;
+                time = leadingZero(hours[i])+' '+amPm;
                 body += '<tr class="'+CLASSNAMES.WEEK_ROW+' weekly">'+
                     '<td style=" text-align: right; padding-right: 15px;">'+time+'</td>';
                 for(var j = weekStart.get('time'); j <= weekEnd.get('time'); j = j+86400000){
-                    timeDate = moment(moment( j ).format('YYYY-MM-DD ')+leading_zero(hours[i])+':00:00');
+                    timeDate = moment(moment( j ).format('YYYY-MM-DD ')+leadingZero(hours[i])+':00:00');
                     body += '<td class="'+CLASSNAMES.DATE_CELL+' '+CLASSNAMES.DATE_DAY+'" data-date="'+timeDate.get('time')+'"><div class="'+CLASSNAMES.DATE_CELL_CONTENT+'"></div></td>';
                 }
                 body += '</tr>';
@@ -399,31 +395,31 @@
             return body;
         }
 
-        const render_header = function(type){
-            var month_name = get_month_name(self.settings.month - 1);
+        const renderHeader = function(type){
+            var month_name = getMonthName(self.settings.month - 1);
             var headerClassnames = '';
-            headerClassnames += ' '+ CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(self.settings.month - 1).toLowerCase())+' ';
-            headerClassnames += ' '+ CLASSNAMES.SEASON_HEADER.replace('{season}', get_season() ? get_season().name : '')+' ';
+            headerClassnames += ' '+ CLASSNAMES.MONTH_HEADER.replace('{month}', getMonthName(self.settings.month - 1).toLowerCase())+' ';
+            headerClassnames += ' '+ CLASSNAMES.SEASON_HEADER.replace('{season}', getSeason() ? getSeason().name : '')+' ';
             // create view specific name
             if(type == 'weekly'){
-                var month_name = get_month_name(weekStart.get('month'));
-                headerClassnames += ' '+ CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(weekStart.get('month') - 1).toLowerCase())+' ';
+                var month_name = getMonthName(weekStart.get('month'));
+                headerClassnames += ' '+ CLASSNAMES.MONTH_HEADER.replace('{month}', getMonthName(weekStart.get('month') - 1).toLowerCase())+' ';
 
-                month_name+= ' '+leading_zero(weekStart.get('date'))+' - ';
+                month_name+= ' '+leadingZero(weekStart.get('date'))+' - ';
                 month_name+= (weekEnd.get('month') != weekStart.get('month')) 
-                            ? get_month_name(weekEnd.get('month'))+' '+leading_zero(weekEnd.get('date')) 
-                            :  leading_zero(weekEnd.get('date')) ;
+                            ? getMonthName(weekEnd.get('month'))+' '+leadingZero(weekEnd.get('date')) 
+                            :  leadingZero(weekEnd.get('date')) ;
             }
 
             // create view specific name
             if(type == 'daily'){
                 var month_name = dailyDate.format('Do MMMM YYYY');
-                headerClassnames += ' '+ CLASSNAMES.MONTH_HEADER.replace('{month}', get_month_name(dailyDate.get('month') - 1).toLowerCase())+' ';
+                headerClassnames += ' '+ CLASSNAMES.MONTH_HEADER.replace('{month}', getMonthName(dailyDate.get('month') - 1).toLowerCase())+' ';
             }
 
             // return html
             return "<div class='"+CLASSNAMES.HEADER+" "+headerClassnames+"'>"+
-                "<div class='"+CLASSNAMES.NAV_CONTROLS+"'>"+render_nav_control('left')+render_nav_control('right')+"</div>"+
+                "<div class='"+CLASSNAMES.NAV_CONTROLS+"'>"+renderNavControl('left')+renderNavControl('right')+"</div>"+
                 "<div class='"+CLASSNAMES.HEADER_CONTENT+"'>"+
                     "<div class='"+CLASSNAMES.HEADER_OPTIONS_CONTAINER+"'>"+
                         "<button class='"+CLASSNAMES.MONTH_NAME_BUTTON+"'>"+month_name+"<span class='caret'></span></button>"+
@@ -440,17 +436,17 @@
                         "</div>"+
                     "</div>"+
                 "</div>"+
-                render_view_options()+
+                renderViewOptions()+
             "</div>"
         }
 
-        const render_nav_control = function(direction){
+        const renderNavControl = function(direction){
             var label = direction == 'right' ? '&rarr;' : '&larr;';
             return "<button class='"+CLASSNAMES.CONTROLS_CONTAINER+"' "+
                         "type='submit' "+direction+">"+label+"</button>";
         }
 
-        const render_view_options = function(){
+        const renderViewOptions = function(){
             return "<div class='"+CLASSNAMES.VIEWS_LIST_CONTAINER+"'><ul class='"+CLASSNAMES.VIEWS_LIST+"'>"+
                 "<li class='"+CLASSNAMES.VIEWS_ITEM+"'>"+
                     "<button type='button' class='"+CLASSNAMES.VIEW_BUTTON+" daily' data-toggle='calendar-view' data-option='daily'>Day</button>"+
@@ -464,7 +460,7 @@
             "</ul></div>";
         }
 
-        const render_add_menu = function(){
+        const renderAddMenu = function(){
             return "<div class='"+CLASSNAMES.ADD_MENU_CONTAINER+"' id='addMenuComponent'>"+
                 "<div class='"+CLASSNAMES.ADD_MENU_INNER+"'>"+
                     "<div class='"+CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER+"'>"+
@@ -477,10 +473,10 @@
                 "</div>"+
             "</div>";
         }
-        const render_events = function()
+        const renderEvents = function()
         {
             // destroy old events first
-            destroy_events();
+            destroyEvents();
 
             var {CALENDAR, WEEK_ROW, WEEK_EVENTS, DATE_CELL, DATE_CELL_CONTENT} = SELECTORS,
                 weeks = $(CALENDAR).find(WEEK_ROW),
@@ -522,7 +518,7 @@
                               (cellTimestamp >= st && cellTimestamp <= et)
                             ){
                                 eventObj = new CPEvent(event, container.find(DATE_CELL_CONTENT), week, DATE_CELL, {
-                                    onClick: handle_event_click
+                                    onClick: handleEventClick
                                 });
                                 eventObj.render();
                                 self.eventInstances.push(eventObj);
@@ -535,7 +531,7 @@
 
         }
 
-        const destroy_events = function()
+        const destroyEvents = function()
         {
             for(var i = 0; i < self.eventInstances.length; i++)
             {
@@ -551,54 +547,54 @@
             var {CONTAINER, ADD_MENU_BUTTON, EXPORT_BUTTON} = SELECTORS; 
 
             // resize calendar
-            resize_calendar();
+            resizeCalendar();
             
             // resize calendar when window resizes
-            $(window).off('resize', resize_calendar);
-            $(window).on('resize', resize_calendar);
+            $(window).off('resize', resizeCalendar);
+            $(window).on('resize', resizeCalendar);
             
             // reposition empty cells background
-            reposition_cell_background();
+            repositionCellBackground();
 
             // reposition empty cells background when window resizes
-            $(window).off('resize', reposition_cell_background);
-            $(window).on('resize', reposition_cell_background);
+            $(window).off('resize', repositionCellBackground);
+            $(window).on('resize', repositionCellBackground);
 
             // listen for click on add menu buttons
-            $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handle_add_menu_button_click);
-            $(CONTAINER).find(ADD_MENU_BUTTON).on('click', handle_add_menu_button_click);
+            $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handleAddMenuButtonClick);
+            $(CONTAINER).find(ADD_MENU_BUTTON).on('click', handleAddMenuButtonClick);
 
             // listen for click on export button
-            $(CONTAINER).find(EXPORT_BUTTON).off('click', export_to);
-            $(CONTAINER).find(EXPORT_BUTTON).on('click', export_to);
+            $(CONTAINER).find(EXPORT_BUTTON).off('click', exportTo);
+            $(CONTAINER).find(EXPORT_BUTTON).on('click', exportTo);
 
             // listen for control button click event
-            listen_for_control_button_click();
+            listenForControlButtonClick();
 
             // listen for date select
-            listen_for_date_select();
+            listenForDateSelect();
 
             // update calendar with selection
-            update_Selection();
+            updateSelection();
 
             // select active view
-            select_active_view();
+            selectActiveView();
 
             // listen for view select
-            listen_view_select();
+            listenViewSelect();
         }
 
-        const create_view = function(calendar)
+        const createView = function(calendar)
         {
-            var container_tpl = copy_var(TEMPLATES.CONTAINER);
-            var calendar_tpl = copy_var(TEMPLATES.MAIN);
-            var days_heading_tpl = copy_var(TEMPLATES.DAYS_HEADING);
-            var cell_tpl = copy_var(TEMPLATES.DAY_CELL);
-            var week_tpl = copy_var(TEMPLATES.WEEK_ROW);
-            var view_options = !self.settings.hideViewOptions ? copy_var(TEMPLATES.VIEWS) : '';
-            var add_menu = copy_var(TEMPLATES.ADD_MENU);
-            var month_name = get_month_name(self.settings.month - 1);
-            var season = get_season();
+            var container_tpl = copyVar(TEMPLATES.CONTAINER);
+            var calendar_tpl = copyVar(TEMPLATES.MAIN);
+            var days_heading_tpl = copyVar(TEMPLATES.DAYS_HEADING);
+            var cell_tpl = copyVar(TEMPLATES.DAY_CELL);
+            var week_tpl = copyVar(TEMPLATES.WEEK_ROW);
+            var view_options = !self.settings.hideViewOptions ? copyVar(TEMPLATES.VIEWS) : '';
+            var add_menu = copyVar(TEMPLATES.ADD_MENU);
+            var month_name = getMonthName(self.settings.month - 1);
+            var season = getSeason();
             var weeks = '';
 
             // loop through calendar and the access weeks within it
@@ -626,7 +622,7 @@
                         if(j == 0 && dayNum.length < 1) classnames += ' '+CLASSNAMES.EMPTY_DAY_BEGINNING+' ' ;
                         
                         // add ending class to last empty day
-                        if(prevDayNum && get_month_days() == prevDayNum.trim()) classnames += ' '+CLASSNAMES.EMPTY_DAY_ENDING+' ' ;
+                        if(prevDayNum && getMonthDays() == prevDayNum.trim()) classnames += ' '+CLASSNAMES.EMPTY_DAY_ENDING+' ' ;
 
                         // make dat attribute empty
                         day = day.replace('{date}', '');
@@ -654,7 +650,7 @@
                     week += day;
                 }
                 // create week template
-                var curr_week_tpl = copy_var(week_tpl);
+                var curr_week_tpl = copyVar(week_tpl);
                 curr_week_tpl = curr_week_tpl.replace('{row}', (i+1));
 
                 weeks += curr_week_tpl.replace('{content}', week);
@@ -669,24 +665,24 @@
             calendar_tpl = calendar_tpl.replace('{classnames}', calenderClassnames);
 
             // add header to calendar
-            container_tpl = container_tpl.replace('{header}', render_header());
+            container_tpl = container_tpl.replace('{header}', renderHeader());
             // add calender to container
             container_tpl = container_tpl.replace('{calendar}', calendar_tpl);
             // add, add menu
-            container_tpl = container_tpl.replace('{add_menu}', render_add_menu());
+            container_tpl = container_tpl.replace('{add_menu}', renderAddMenu());
 
             // return generated calendar
             return container_tpl;
         }
 
-        const create_calendar = function() {
-            var days = get_month_days(self.settings.month, self.settings.year);
+        const createCalendar = function() {
+            var days = getMonthDays(self.settings.month, self.settings.year);
             var firstDay = new Date(self.settings.year, self.settings.month - 1, 1);
             var startDay = firstDay.getDay();
-            return array_chunk(create_month_arrays(startDay, days), 7);
+            return arrayChunk(createMonthArrays(startDay, days), 7);
         }
 
-        const create_month_arrays = function(start, maxDays)
+        const createMonthArrays = function(start, maxDays)
         {
             var days = [];
             // add days to days array
@@ -704,7 +700,7 @@
             return days;
         }
 
-        const get_month_days = function(month, year)
+        const getMonthDays = function(month, year)
         {
             // create month number as string
             var monthStr = typeof month == 'number' ? month.toString() : month;
@@ -720,7 +716,7 @@
             if (_31Days.indexOf(monthStr) != -1) days = 31;
             else if (_30Days.indexOf(monthStr) != -1) days = 30;
             else if (month == 2) {
-                if (is_leap_year(year)) days = 29;
+                if (isLeapYear(year)) days = 29;
                 else days = 28;
             }
 
@@ -728,7 +724,7 @@
             return (days);
         }
 
-        const is_leap_year = function(year)
+        const isLeapYear = function(year)
         {
             if (year % 4 == 0) // basic rule
             return true // is leap year
@@ -736,7 +732,7 @@
             return false // is not leap year
         }
 
-        const resize_calendar = function()
+        const resizeCalendar = function()
         {
             let {CONTAINER, CALENDAR, WEEK_ROW, DATE_CELL, DATE_CELL_CONTENT} = SELECTORS;
             var cells = $(CONTAINER+' '+CALENDAR+' '+WEEK_ROW+' '+DATE_CELL);
@@ -745,10 +741,10 @@
                 height = 'initial'
             }
             cells.find(DATE_CELL_CONTENT).css({height: height});
-            reposition_addmenu();
+            repositionAddmenu();
         }
 
-        const reposition_cell_background = function()
+        const repositionCellBackground = function()
         {
             let {CONTAINER, CALENDAR, WEEK_ROW, DATE_CELL} = SELECTORS;
             var cells = $(CONTAINER+' '+CALENDAR+' '+WEEK_ROW+' '+DATE_CELL);
@@ -777,40 +773,40 @@
             }
         }
 
-        const listen_for_control_button_click = function()
+        const listenForControlButtonClick = function()
         {
             // copy selector name
-            var BUTTONS = copy_var(SELECTORS.CONTROL_BUTTONS);
-            $(BUTTONS).off('click', handle_control_button_click);
-            $(BUTTONS).on('click', handle_control_button_click);
+            var BUTTONS = copyVar(SELECTORS.CONTROL_BUTTONS);
+            $(BUTTONS).off('click', handleControlButtonClick);
+            $(BUTTONS).on('click', handleControlButtonClick);
         }
 
-        const handle_control_button_click = function(ev)
+        const handleControlButtonClick = function(ev)
         {
             // get target element
             var el = ev.target;
             var left = $(el).attr('left');
             var right = $(el).attr('right');
-            var settings  = copy_var(self.settings);
+            var settings  = copyVar(self.settings);
             var direction = left !== undefined ? 'left' : undefined
                 direction = right !== undefined ? 'right' : direction
 
             // chang month if calendar is in monthly view
             if(settings.view == 'monthly'){
-                change_month(direction);
+                changeMonth(direction);
             }
             // change week if calendar is in week view
             if(settings.view == 'weekly'){
-                change_week(direction);
+                changeWeek(direction);
             }
             // determine what direction to go to
             if(settings.view == 'daily'){
-                change_date(direction);
+                changeDate(direction);
             }
         }
 
-        const change_month = function(direction){
-            var settings  = copy_var(self.settings);
+        const changeMonth = function(direction){
+            var settings  = copyVar(self.settings);
 
             if(direction == 'left')
             {
@@ -833,8 +829,8 @@
             var now = moment();
             // reset week start
             weekStart = (now.get('month') + 1) == settings.month && now.get('year') == settings.year 
-                        ? moment( `${settings.year}-${leading_zero(settings.month)}-${leading_zero(now.get('date'))}` ) 
-                        : moment(`${settings.year}-${leading_zero(settings.month)}-01`);
+                        ? moment( `${settings.year}-${leadingZero(settings.month)}-${leadingZero(now.get('date'))}` ) 
+                        : moment(`${settings.year}-${leadingZero(settings.month)}-01`);
             // reset week end
             weekEnd = moment(weekStart).add(6, 'days');
             // reset daily start
@@ -843,8 +839,8 @@
             launch();
         }
 
-        const change_week = function(direction){
-            var settings  = copy_var(self.settings);
+        const changeWeek = function(direction){
+            var settings  = copyVar(self.settings);
             if(direction == 'left'){
                 weekStart = moment(weekStart).subtract(8, 'day');
             } else if(direction == 'right'){
@@ -864,8 +860,8 @@
             launch();
         }
 
-        const change_date = function(direction){
-            var settings  = copy_var(self.settings);
+        const changeDate = function(direction){
+            var settings  = copyVar(self.settings);
             if(direction == 'left'){
                 dailyDate = moment(dailyDate).subtract(1, 'day');
             } else if(direction == 'right'){
@@ -891,13 +887,13 @@
             launch();
         }
 
-        const handle_add_menu_button_click = function(ev)
+        const handleAddMenuButtonClick = function(ev)
         {
             // get required selectors
             var {CONTAINER, ADD_MENU_BUTTON} = SELECTORS; 
 
             // turn click event listener off
-            $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handle_add_menu_button_click);
+            $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handleAddMenuButtonClick);
 
             // get element
             var el = $(ev.currentTarget);
@@ -905,11 +901,11 @@
             switch(action){
                 case 'add-event':
                     // pop up modal
-                    add_event();
+                    addEvent();
                 break;
                 case 'cancel':
                     // cancel selection
-                    cancel_selection();
+                    cancelSelection();
                 break;
                 default:
                     // do nothing
@@ -920,7 +916,7 @@
             start();
         }
 
-        const add_event = function()
+        const addEvent = function()
         {
             // get start and end
             var start = self.selection.length > 0 ? self.selection[0] : null;
@@ -939,48 +935,48 @@
             };
 
             // show modal
-            self.modal.show(data);
+            self.createFormModal.show(data);
 
             // calcel selection
-            cancel_selection();
+            cancelSelection();
         }
 
-        const cancel_selection = function()
+        const cancelSelection = function()
         {
             self.selection = [];
-            update_Selection();
+            updateSelection();
         }
 
-        const handle_event_click = function(event)
+        const handleEventClick = function(event)
         {
             // create start and end date
             var startDate = new Date(event.startDate);
             var endDate = new Date(event.endDate);
 
             // create new event data
-            var data = {
+            var data = Object.assign({}, event, {
                 title: event.title,
                 startDate,
                 endDate,
                 startTime: event.startTime,
                 endTime: event.endTime
-            };
+            });
 
-            self.editModal.show(data, event.id);
+            self.editFormModal.show(data, event.id);
         }
 
-        const listen_for_date_select = function()
+        const listenForDateSelect = function()
         {
             var {DATE_DAY} = SELECTORS;
-            $(DATE_DAY).off('click', handle_date_select);
-            $(DATE_DAY).on('click', handle_date_select);
+            $(DATE_DAY).off('click', handleDateSelect);
+            $(DATE_DAY).on('click', handleDateSelect);
         }
 
-        const handle_date_select = function(ev)
+        const handleDateSelect = function(ev)
         {
             // turn off click event listener
             var {DATE_DAY} = SELECTORS;
-            $(DATE_DAY).off('click', handle_date_select);
+            $(DATE_DAY).off('click', handleDateSelect);
 
             // get element and date
             var el = ev.currentTarget;
@@ -1012,14 +1008,14 @@
                 }
     
                 // update the selected dates on calendar
-                update_Selection();
+                updateSelection();
             }
     
             // listen for click event again
-            listen_for_date_select();
+            listenForDateSelect();
         };
 
-        const update_Selection = function()
+        const updateSelection = function()
         {
             var {CALENDAR, DATE_DAY} = SELECTORS;
             var {DATE_SELECTED} = CLASSNAMES;
@@ -1064,10 +1060,10 @@
                     
                 }
             }
-            toggle_add_menu_visiblity();
+            toggleAddMenuVisiblity();
         };
 
-        const toggle_add_menu_visiblity = function()
+        const toggleAddMenuVisiblity = function()
         {
             // get plugin html selector references
             var {CONTAINER, ADD_MENU_CONTAINER, DATE_SELECTED} = SELECTORS;
@@ -1096,20 +1092,20 @@
             }
             
             // reposition add menu
-            reposition_addmenu();
+            repositionAddmenu();
         }
 
-        const reposition_addmenu = function()
+        const repositionAddmenu = function()
         {
             // get plugin html selector references
             var {ADD_MENU_CONTAINER, DATE_CELL_CONTENT, CONTAINER} = SELECTORS;
             var {ADD_MENU_ABOVE} = CLASSNAMES;
 
             // get end element
-            var end = get_selection_end_cell();
+            var end = getSelectionEndCell();
             var container = $(CONTAINER);
             var addMenuEl = container.find(ADD_MENU_CONTAINER);
-            var viewport = get_viewport();
+            var viewport = getViewport();
 
             if(end != null && end != undefined)
             {
@@ -1144,7 +1140,7 @@
             }
         }
 
-        const reposition_events = function()
+        const repositionEvents = function()
         {
             for(var i = 0; i < self.eventInstances.length; i++)
             {
@@ -1153,7 +1149,7 @@
             }
         }
 
-        const array_chunk = function(data, chunk_size)
+        const arrayChunk = function(data, chunk_size)
         {
             var checked_data = [];
             for (var i=0; i < data.length; i+=chunk_size)
@@ -1163,12 +1159,12 @@
             return checked_data
         }
 
-        const copy_var = function(data)
+        const copyVar = function(data)
         {
             return JSON.parse(JSON.stringify(data));
         }
 
-        const get_month_name = function(month)
+        const getMonthName = function(month)
         {
             // return nuthing if specified month does not exist
             if(MONTHS[month] == undefined)
@@ -1179,7 +1175,7 @@
             return MONTHS[month];
         }
 
-        const get_season = function()
+        const getSeason = function()
         {
             for(var name in self.settings.seasons)
             {
@@ -1202,7 +1198,7 @@
             return null;
         }
 
-        const get_selection_end_cell = function()
+        const getSelectionEndCell = function()
         {
             // get end date from selection
             var start = self.selection.length > 0 ? self.selection[0] : null;
@@ -1218,14 +1214,14 @@
             return end;
         }
 
-        const get_viewport = function()
+        const getViewport = function()
         {
             var width = $(document).outerWidth();
             var height = $(document).outerHeight();
             return {width, height};
         }
 
-        const refresh_calendar_events = function()
+        const refreshCalendarEvents = function()
         {
             // cancel ongoing get requests
             if(getEventsRequest && getEventsRequest.readyState != 4)
@@ -1252,18 +1248,18 @@
                 method: 'GET',
                 data: data,
                 headers: headers
-            }).done(refresh_calendar_events_done).fail(refresh_calendar_events_fail);
+            }).done(refreshCalendarEventsDone).fail(refreshCalendarEventsFail);
         }
 
-        const refresh_calendar_events_done = function(resp)
+        const refreshCalendarEventsDone = function(resp)
         {
             // get the events
-            self.events = get_events_data(resp);
+            self.events = getEventsData(resp);
             // render events
-            render_events();
+            renderEvents();
         }
 
-        const refresh_calendar_events_fail = function(err)
+        const refreshCalendarEventsFail = function(err)
         {
             if(err.statusText != 'abort')
             {
@@ -1273,7 +1269,7 @@
             }
         }
 
-        const get_events_data = function(data)
+        const getEventsData = function(data)
         {
             if(self.settings.respData === null) return data;
 
@@ -1283,11 +1279,11 @@
                 return data;
             }
 
-            var dataPath = copy_var( self.settings.respData );
+            var dataPath = copyVar( self.settings.respData );
             dataPath = dataPath.trim();
             dataPath = dataPath.split('.');
 
-            var events = copy_var( data );
+            var events = copyVar( data );
 
             for(var i = 0; i < dataPath.length; i++)
             {
@@ -1298,26 +1294,28 @@
             if(events)
             {
                 for(var i = 0; i < events.length; i++)
-                {  events[i] = transform_data(events[i]); }
+                {  events[i] = parseEvent(events[i]); }
             }
 
             return events;
         }
 
-        const transform_data = function(data)
+        const parseEvent = function(data)
         {
-            var transform = {
-                id: find_data(data, self.settings.id),
-                title: find_data(data, self.settings.title),
-                startDate: find_data(data, self.settings.startDate),
-                endDate: find_data(data, self.settings.endDate),
-                startTime: find_data(data, self.settings.startTime),
-                endTime: find_data(data, self.settings.endTime),
-            };
-            return transform;
+            if( self.settings.map 
+                && self.settings.map.constructor == Object
+            ){
+                let transform = Object.assign({}, data);
+                let mapKeys = Object.keys(self.settings.map);
+                for(var i = 0; i < mapKeys.length; i++){
+                    transform[mapKeys[i]] = findData(data, self.settings.map[mapKeys[i]]);
+                }
+                return transform;
+            }
+            return data;
         }
 
-        const find_data = function(data, key)
+        const findData = function(data, key)
         {
             if(typeof key != 'string')
             {
@@ -1325,11 +1323,11 @@
                 return data;
             }
 
-            var dataPath = copy_var( key );
+            var dataPath = copyVar( key );
             dataPath = dataPath.trim();
             dataPath = dataPath.split('.');
 
-            var found = copy_var( data );
+            var found = copyVar( data );
             var didFind = false;
 
             for(var i = 0; i < dataPath.length; i++)
@@ -1342,7 +1340,7 @@
             return didFind ? found : null;
         }
 
-        const is_in_week = function(week, event)
+        const isInWeek = function(week, event)
         {
             // define variables
             var {DATE_CELL} = SELECTORS,
@@ -1372,7 +1370,7 @@
             return found;
         }
 
-        const export_to = function(ev)
+        const exportTo = function(ev)
         {
             ev.preventDefault();
             var el = $(ev.currentTarget),
@@ -1390,12 +1388,12 @@
             }
         }
 
-        const listen_view_select = function(){
-            $(SELECTORS.VIEW_SELECTOR).off('click', handle_view_select);
-            $(SELECTORS.VIEW_SELECTOR).on('click', handle_view_select);
+        const listenViewSelect = function(){
+            $(SELECTORS.VIEW_SELECTOR).off('click', handleViewSelect);
+            $(SELECTORS.VIEW_SELECTOR).on('click', handleViewSelect);
         }
 
-        const handle_view_select = function(ev){
+        const handleViewSelect = function(ev){
             var el = $(ev.currentTarget);
             var option = el.attr('data-option');
             if(self.viewOptions.indexOf(option) == -1){
@@ -1406,13 +1404,13 @@
                     view: option
                 });
                 // remove any selection
-                cancel_selection();
+                cancelSelection();
                 // rerender calendar
                 setTimeout(launch, 200);
             }
         }
 
-        const select_active_view = function(){
+        const selectActiveView = function(){
             var { VIEWS_LIST_CONTAINER } = SELECTORS;
 
             var option = $(VIEWS_LIST_CONTAINER).find("[data-option='"+self.settings.view+"']");
@@ -1427,12 +1425,24 @@
             }
         }
 
-        const leading_zero = function(number){
+        const leadingZero = function(number){
             if(typeof number == 'number')
             {
                 number = number.toString();
             }
             return number.trim().length >= 2 ? number : '0'+number;
+        }
+
+        const destroy = function(){
+            if(self.createFormModal){
+                self.createFormModal.destroy();
+            }
+            if(self.editFormModal){
+                self.editFormModal.destroy();
+            }
+            $(self.el).children().remove().call(() => {
+                $(self.el).html('');
+            });
         }
     }
 

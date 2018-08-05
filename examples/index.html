@@ -1,70 +1,91 @@
 <!DOCTYPE html>
 <html lang='en'>
-    <head>
-        <meta charset='utf-8'/>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Calendar Plugin</title>
-        <link rel="stylesheet" href="css/calendar-plugin.min.css" media="all"/>
-        <!-- <link rel="stylesheet" href="plugins/jquery-ui/ui-lightness/jquery-ui.min.css"> -->
-        <link rel="stylesheet" href="plugins/jquery-ui/ui-lightness/theme.css">
-        <link rel="stylesheet" href="plugins/jqueryui-datepicker/datepicker.css">
-    </head>
 
-    <body>
-        <div style='position: relative; float: left; width: 100%;'>
-            <section id='calendar'></section>
-        </div>
+<head>
+    <meta charset='utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Calendar Plugin</title>
+    <link rel="stylesheet" href="css/calendar-plugin.min.css" media="all" />
+    <!-- <link rel="stylesheet" href="plugins/jquery-ui/ui-lightness/jquery-ui.min.css"> -->
+    <link rel="stylesheet" href="plugins/jquery-ui/ui-lightness/theme.css">
+    <link rel="stylesheet" href="plugins/jqueryui-datepicker/datepicker.css">
+</head>
 
-        <script src="plugins/jquery/jquery.min.js"></script>
-        <!-- <script src="plugins/jquery-ui/jquery-ui.min.js"></script> -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
-        <script src="plugins/jqueryui-datepicker/datepicker.js"></script>
-        <script src="js/calendar-plugin.js"></script>
-        <script type='text/javascript'>
-            $('#calendar').CalendarPlugin({
-                url: 'http://localhost:8040/php/events.php',
-                headers: { },
-                data: { },
-                id: 'id',
-                createRequest: {
-                    title: 'title',
-                    startDate: 'fromDate',
-                    endDate: 'endDate',
-                    startTime: 'startTime',
-                    endTime: 'endTime'
-                },
-                editRequest: {
-                    title: 'title',
-                    startDate: 'fromDate',
-                    endDate: 'endDate',
-                    startTime: 'startTime',
-                    endTime: 'endTime'
-                },
-                form: [
-                    [{
+<body>
+    <div style='position: relative; float: left; width: 100%;'>
+        <section id='calendar'></section>
+    </div>
+
+    <script src="plugins/jquery/jquery.min.js"></script>
+    <!-- <script src="plugins/jquery-ui/jquery-ui.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.js"></script>
+    <script src="plugins/jqueryui-datepicker/datepicker.js"></script>
+    <script src="js/calendar-plugin.js"></script>
+    <script type='text/javascript'>
+        $('#calendar').CalendarPlugin({
+            url: 'http://localhost:8040/php/events.php',
+            form: [
+                [
+                    {
                         type: 'text',
-                        name: 'firstName',
-                        label: 'First Name',
-                        placeholder: 'Enter your first name here'
-                    },{
+                        name: 'title',
+                        label: 'Event Name',
+                        placeholder: 'E.g. Marathon'
+                    },
+                    {
                         type: 'text',
                         name: 'lastName',
                         label: 'Last Name',
                         placeholder: 'Enter your last name here'
-                    },{
+                    }
+                ],
+                [
+                    {
                         type: 'select',
                         name: 'gender',
                         label: 'Gender',
                         placeholder: 'Select your gender',
-                        options: {male: 'Male', female: 'Femaile'}
-                    },{
+                        options: { male: 'Male', female: 'Female' }
+                    },
+                    {
+                        type: 'select',
+                        name: 'category',
+                        label: 'Category',
+                        placeholder: 'Select a category',
+                        options: { male: 'Male', female: 'Female' }
+                    }
+                ],
+                [
+                    {
                         type: 'date',
                         name: 'startDate',
                         label: 'Start Date',
-                        placeholder: '',
-                    }]
+                        placeholder: 'DD/MM/YYYY',
+                    },
+                    {
+                        type: 'date',
+                        name: 'endDate',
+                        label: 'End Date',
+                        placeholder: 'DD/MM/YYYY',
+                    }
+                ],
+                [
+                    {
+                        type: 'time',
+                        name: 'startTime',
+                        label: 'Start Time',
+                        placeholder: 'hh:mm AM/PM',
+                    },
+                    {
+                        type: 'time',
+                        name: 'endTime',
+                        label: 'End Time',
+                        placeholder: 'hh:mm AM/PM',
+                    }
                 ]
-            });
-        </script>
-    </body>
+            ]
+        });
+    </script>
+</body>
+
 </html>
