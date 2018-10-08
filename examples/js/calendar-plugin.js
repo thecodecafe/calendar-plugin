@@ -65,6 +65,12 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
         ADD_MENU_BUTTON: PREFIX + '-add-menu-button',
         ADD_MENU_ABOVE: PREFIX + '-add-menu-above',
         ADD_MENU_VISIBLE: PREFIX + '-add-menu-visible',
+        EVENT_MENU_CONTAINER: PREFIX + '-event-menu',
+        EVENT_MENU_INNER: PREFIX + '-event-menu-inner',
+        EVENT_MENU_BUTTONS_CONTAINER: PREFIX + '-event-menu-buttons-container',
+        EVENT_MENU_BUTTON: PREFIX + '-event-menu-button',
+        EVENT_MENU_ABOVE: PREFIX + '-event-menu-above',
+        EVENT_MENU_VISIBLE: PREFIX + '-event-menu-visible',
         VIEWS_LIST_CONTAINER: PREFIX + '-view-list-container',
         VIEWS_LIST: PREFIX + '-view-list',
         VIEWS_ITEM: PREFIX + '-view',
@@ -107,6 +113,10 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
         ADD_MENU_INNER: '.' + PREFIX + '-add-menu-inner',
         ADD_MENU_BUTTON: '.' + PREFIX + '-add-menu-button',
         ADD_MENU_BUTTONS_CONTAINER: '.' + PREFIX + '-add-menu-buttons-container',
+        EVENT_MENU_CONTAINER: '.' + PREFIX + '-event-menu',
+        EVENT_MENU_INNER: '.' + PREFIX + '-event-menu-inner',
+        EVENT_MENU_BUTTON: '.' + PREFIX + '-event-menu-button',
+        EVENT_MENU_BUTTONS_CONTAINER: '.' + PREFIX + '-event-menu-buttons-container',
         VIEWS_LIST_CONTAINER: '.' + PREFIX + '-view-list-container',
         VIEWS_LIST: '.' + PREFIX + '-view-list',
         VIEWS_ITEM: '.' + PREFIX + '-view',
@@ -119,7 +129,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
          * html month templates for all the different parts of the calendar
          */
     };var TEMPLATES = {
-        CONTAINER: "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>{header}{calendar}{add_menu}</div>",
+        CONTAINER: "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>{header}{calendar}{add_menu}{event_menu}</div>",
         MAIN: "<table class='" + CLASSNAMES.CALENDAR + " {classnames}'  cellspacing='0' cellpadding='0'><thead>{heading}</thead><tbody>{content}</tbody></table>",
         DAYS_HEADING: "<tr class='" + CLASSNAMES.MONTH_HEADING + "'> <th>Sun</th> <th>Mon</th> <th>Tue</th> <th>Wed</th> <th>Thur</th> <th>Fri</th> <th>Sat</th> </tr>",
         WEEK_ROW: "<tr class='" + CLASSNAMES.WEEK_ROW + "' data-row='{row}'>{content}</tr>",
@@ -192,8 +202,9 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
                 creatRequest: null,
                 editRequest: null,
                 view: 'monthly',
-                hideViewOptions: false,
-                form: []
+                changableView: true,
+                form: [],
+                disableForm: false
             }, options);
 
             // configure seasons
@@ -289,11 +300,15 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
         };
 
         var weeklyCalendar = function weeklyCalendar() {
-            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + renderHeader('weekly') + "<table class='" + CLASSNAMES.CALENDAR + " weekly'  cellspacing='0' cellpadding='0'>" + "<thead>" + renderWeeklyHeading() + "</thead>" + "<tbody>" + renderWeeklyBody() + "</tbody>" + "</table>" + renderAddMenu() + "</div>";
+            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + renderHeader('weekly') + "<table class='" + CLASSNAMES.CALENDAR + " weekly'  cellspacing='0' cellpadding='0'>" + "<thead>" + renderWeeklyHeading() + "</thead>" + "<tbody>" + renderWeeklyBody() + "</tbody>" + "</table>" + renderAddMenu() + renderEventMenu() + "</div>";
         };
 
         var dailyCalendar = function dailyCalendar() {
-            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + renderHeader('daily') + "<table class='" + CLASSNAMES.CALENDAR + " daily'  cellspacing='0' cellpadding='0'>" + "<thead>" + renderDailyHeading() + "</thead>" + "<tbody>" + renderDailyBody() + "</tbody>" + "</table>" + renderAddMenu() + "</div>";
+            return "<div class='" + CLASSNAMES.CONTAINER + "' id='" + SELECTORS.CONTAINER_ID + "'>" + renderHeader('daily') + "<table class='" + CLASSNAMES.CALENDAR + " daily'  cellspacing='0' cellpadding='0'>" + "<thead>" + renderDailyHeading() + "</thead>" + "<tbody>" + renderDailyBody() + "</tbody>" + "</table>" + renderAddMenu() + renderEventMenu() + "</div>";
+        };
+
+        var renderEventMenu = function renderEventMenu() {
+            return ('\n                <div class=\'' + CLASSNAMES.EVENT_MENU_CONTAINER + '\' id=\'eventMenuComponent\'>\n                    <div class=\'' + CLASSNAMES.EVENT_MENU_INNER + '\'>\n                        <div class=\'' + CLASSNAMES.EVENT_MENU_BUTTONS_CONTAINER + '\'>\n                            <button class=\'' + CLASSNAMES.EVENT_MENU_BUTTON + '\' type=\'button\' data-action=\'edit-event\'>Edit Event</button>\n                            <button class=\'' + CLASSNAMES.EVENT_MENU_BUTTON + '\' type=\'button\' data-action=\'copy-event\'>Copy Event</button>\n                            <button class=\'' + CLASSNAMES.EVENT_MENU_BUTTON + ' cancel\' data-action=\'cancel\' type=\'button\'>Cancel</button>\n                        </div>\n                        <span class=\'caret\'></span>\n                    </div>\n                </div>\n            ').trim();
         };
 
         var renderDailyHeading = function renderDailyHeading() {
@@ -372,12 +387,19 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
         };
 
         var renderViewOptions = function renderViewOptions() {
+            if (!self.settings.changableView) {
+                return '';
+            }
             return "<div class='" + CLASSNAMES.VIEWS_LIST_CONTAINER + "'><ul class='" + CLASSNAMES.VIEWS_LIST + "'>" + "<li class='" + CLASSNAMES.VIEWS_ITEM + "'>" + "<button type='button' class='" + CLASSNAMES.VIEW_BUTTON + " daily' data-toggle='calendar-view' data-option='daily'>Day</button>" + "</li>" + "<li class='" + CLASSNAMES.VIEWS_ITEM + "'>" + "<button type='button' class='" + CLASSNAMES.VIEW_BUTTON + " weekly' data-toggle='calendar-view' data-option='weekly'>Week</button>" + "</li>" + "<li class='" + CLASSNAMES.VIEWS_ITEM + "'>" + "<button type='button' class='" + CLASSNAMES.VIEW_BUTTON + " monthly' data-toggle='calendar-view' data-option='monthly'>Month</button>" + "</li>" + "</ul></div>";
         };
 
         var renderAddMenu = function renderAddMenu() {
+            if (self.settings.disableForm) {
+                return '';
+            }
             return "<div class='" + CLASSNAMES.ADD_MENU_CONTAINER + "' id='addMenuComponent'>" + "<div class='" + CLASSNAMES.ADD_MENU_INNER + "'>" + "<div class='" + CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER + "'>" + "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + "' type='button' data-action='add-event'>" + "Add Event</button>" + "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + " cancel' data-action='cancel' type='button'>" + "Cancel</button>" + "</div>" + "<span class='caret'></span>" + "</div>" + "</div>";
         };
+
         var renderEvents = function renderEvents() {
             // destroy old events first
             destroyEvents();
@@ -453,7 +475,8 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             // get required selectors
             var CONTAINER = SELECTORS.CONTAINER,
                 ADD_MENU_BUTTON = SELECTORS.ADD_MENU_BUTTON,
-                EXPORT_BUTTON = SELECTORS.EXPORT_BUTTON;
+                EXPORT_BUTTON = SELECTORS.EXPORT_BUTTON,
+                EVENT_MENU_BUTTON = SELECTORS.EVENT_MENU_BUTTON;
 
             // resize calendar
 
@@ -473,6 +496,10 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             // listen for click on add menu buttons
             $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handleAddMenuButtonClick);
             $(CONTAINER).find(ADD_MENU_BUTTON).on('click', handleAddMenuButtonClick);
+
+            // listen for click on event menu buttons
+            $(CONTAINER).find(EVENT_MENU_BUTTON).off('click', handleEventMenuButtonClick);
+            $(CONTAINER).find(EVENT_MENU_BUTTON).on('click', handleEventMenuButtonClick);
 
             // listen for click on export button
             $(CONTAINER).find(EXPORT_BUTTON).off('click', exportTo);
@@ -500,8 +527,6 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             var days_heading_tpl = copyVar(TEMPLATES.DAYS_HEADING);
             var cell_tpl = copyVar(TEMPLATES.DAY_CELL);
             var week_tpl = copyVar(TEMPLATES.WEEK_ROW);
-            var view_options = !self.settings.hideViewOptions ? copyVar(TEMPLATES.VIEWS) : '';
-            var add_menu = copyVar(TEMPLATES.ADD_MENU);
             var month_name = getMonthName(self.settings.month - 1);
             var season = getSeason();
             var weeks = '';
@@ -571,6 +596,8 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             container_tpl = container_tpl.replace('{calendar}', calendar_tpl);
             // add, add menu
             container_tpl = container_tpl.replace('{add_menu}', renderAddMenu());
+            // add, edit menu
+            container_tpl = container_tpl.replace('{event_menu}', renderEventMenu());
 
             // return generated calendar
             return container_tpl;
@@ -699,6 +726,8 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             if (settings.view == 'daily') {
                 changeDate(direction);
             }
+
+            cancelEventSelection();
         };
 
         var changeMonth = function changeMonth(direction) {
@@ -806,6 +835,42 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             start();
         };
 
+        var handleEventMenuButtonClick = function handleEventMenuButtonClick(ev) {
+            // get required selectors
+            var CONTAINER = SELECTORS.CONTAINER,
+                ADD_MENU_BUTTON = SELECTORS.ADD_MENU_BUTTON;
+
+            // turn click event listener off
+
+            $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handleAddMenuButtonClick);
+
+            // get element
+            var el = $(ev.currentTarget);
+            var action = el.attr('data-action');
+            switch (action) {
+                case 'edit-event':
+                    // pop up modal
+                    self.editFormModal.show(self.selectedEvent, self.selectedEvent.id);
+                    break;
+                case 'copy-event':
+                    // pop up modal
+                    // copyEvent();
+                    break;
+                case 'cancel':
+                    // cancel selection
+                    cancelEventSelection();
+                    break;
+                default:
+                    // do nothing
+                    break;
+            }
+
+            cancelEventSelection();
+
+            // start listening for click events on add menu buttons again
+            start();
+        };
+
         var addEvent = function addEvent() {
             // get start and end
             var start = self.selection.length > 0 ? self.selection[0] : null;
@@ -835,21 +900,58 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             updateSelection();
         };
 
-        var handleEventClick = function handleEventClick(event) {
-            // create start and end date
-            var startDate = new Date(event.startDate);
-            var endDate = new Date(event.endDate);
+        var cancelEventSelection = function cancelEventSelection() {
+            toggleSelectedEventHighlight(true);
+            self.selectedEvent = undefined;
+            self.selectedEventTarget = undefined;
+            toggleEventMenuVisiblity();
+        };
 
-            // create new event data
-            var data = Object.assign({}, event, {
-                title: event.title,
+        var handleEventClick = function handleEventClick(eventData, ev) {
+            if (self.settings.disableForm) {
+                return;
+            }
+
+            // create start and end date
+            var startDate = new Date(eventData.startDate);
+            var endDate = new Date(eventData.endDate);
+
+            // create new eventData data
+            var data = Object.assign({}, eventData, {
+                title: eventData.title,
                 startDate: startDate,
                 endDate: endDate,
-                startTime: event.startTime,
-                endTime: event.endTime
+                startTime: eventData.startTime,
+                endTime: eventData.endTime
             });
 
-            self.editFormModal.show(data, event.id);
+            // deselect previously selected event
+            toggleSelectedEventHighlight(true);
+
+            // set selected eventData
+            self.selectedEvent = Object.assign({}, data);
+            self.selectedEventTarget = $(ev.currentTarget);
+
+            // highlight selected events
+            toggleSelectedEventHighlight();
+
+            // console.log(ev.currentTarget);
+            toggleEventMenuVisiblity();
+
+            // self.editFormModal.show(data, eventData.id);
+        };
+
+        var toggleSelectedEventHighlight = function toggleSelectedEventHighlight(remove) {
+            if (self.selectedEventTarget) {
+                var eventButtons = $('.cp-ev-event[data-evid=' + self.selectedEventTarget.attr('data-evid') + ']');
+                if (eventButtons.length > 0) {
+                    if (remove) {
+                        eventButtons.removeClass('cp-ev-event-selected');
+                        return;
+                    }
+                    eventButtons.addClass('cp-ev-event-selected');
+                }
+            }
         };
 
         var listenForDateSelect = function listenForDateSelect() {
@@ -864,6 +966,10 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             var DATE_DAY = SELECTORS.DATE_DAY;
 
             $(DATE_DAY).off('click', handleDateSelect);
+
+            if (self.settings.disableForm) {
+                return;
+            }
 
             // get element and date
             var el = ev.currentTarget;
@@ -955,6 +1061,7 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             if (selected && selected.length > 0) {
                 if (!addMenuEl.hasClass(ADD_MENU_VISIBLE)) {
                     addMenuEl.addClass(ADD_MENU_VISIBLE);
+                    cancelEventSelection();
                 }
             } else {
                 if (addMenuEl.hasClass(ADD_MENU_VISIBLE)) {
@@ -964,6 +1071,79 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
             // reposition add menu
             repositionAddmenu();
+        };
+
+        var toggleEventMenuVisiblity = function toggleEventMenuVisiblity() {
+            // get plugin html selector references
+            var CONTAINER = SELECTORS.CONTAINER,
+                EVENT_MENU_CONTAINER = SELECTORS.EVENT_MENU_CONTAINER,
+                DATE_SELECTED = SELECTORS.DATE_SELECTED;
+            // get required classnames
+
+            var EVENT_MENU_VISIBLE = CLASSNAMES.EVENT_MENU_VISIBLE;
+
+            // select elements
+
+            var container = $(CONTAINER);
+            var selected = container.find(DATE_SELECTED);
+            var eventMenuEl = container.find(EVENT_MENU_CONTAINER);
+
+            // toggle visibility
+            if (self.selectedEventTarget && self.selectedEventTarget.length > 0) {
+                if (!eventMenuEl.hasClass(EVENT_MENU_VISIBLE)) {
+                    eventMenuEl.addClass(EVENT_MENU_VISIBLE);
+                    cancelSelection();
+                }
+            } else {
+                if (eventMenuEl.hasClass(EVENT_MENU_VISIBLE)) {
+                    eventMenuEl.removeClass(EVENT_MENU_VISIBLE);
+                }
+                self.selectedEventTarget = undefined;
+            }
+
+            // reposition event menu
+            repositionEventmenu();
+        };
+
+        var repositionEventmenu = function repositionEventmenu() {
+            // get plugin html selector references
+            var EVENT_MENU_CONTAINER = SELECTORS.EVENT_MENU_CONTAINER,
+                DATE_CELL_CONTENT = SELECTORS.DATE_CELL_CONTENT,
+                CONTAINER = SELECTORS.CONTAINER;
+            var EVENT_MENU_ABOVE = CLASSNAMES.EVENT_MENU_ABOVE;
+
+            // get end element
+
+            var end = self.selectedEventTarget;
+            var container = $(CONTAINER);
+            var eventMenuEl = container.find(EVENT_MENU_CONTAINER);
+            var viewport = getViewport();
+
+            if (end != null && end != undefined) {
+                var offset = end.offset();
+                var left = offset ? offset.left : 0;
+                var top = offset ? offset.top + end.outerHeight() - 10 : 0;
+
+                if (end.outerWidth() > eventMenuEl.outerWidth()) {
+                    left = left + (end.outerWidth() - eventMenuEl.outerWidth()) / 2;
+                } else {
+                    left = left - (eventMenuEl.outerWidth() - end.outerWidth()) / 2;
+                }
+
+                if (eventMenuEl.outerHeight() + top > viewport.height) {
+                    top = offset ? offset.top - eventMenuEl.outerHeight() + 10 : 0;
+                    if (!eventMenuEl.hasClass(EVENT_MENU_ABOVE)) {
+                        eventMenuEl.addClass(EVENT_MENU_ABOVE);
+                    }
+                } else {
+                    if (eventMenuEl.hasClass(EVENT_MENU_ABOVE)) {
+                        eventMenuEl.removeClass(EVENT_MENU_ABOVE);
+                    }
+                }
+
+                // add css positions to element
+                eventMenuEl.css({ 'top': top, 'left': left });
+            }
         };
 
         var repositionAddmenu = function repositionAddmenu() {
@@ -1416,7 +1596,7 @@ var CPEvent = function () {
     }, {
         key: 'handle_on_click',
         value: function handle_on_click(ev) {
-            this.options.onClick(this.data);
+            this.options.onClick(this.data, ev);
         }
     }, {
         key: 'handle_on_mouse_enter',
@@ -1579,7 +1759,7 @@ var CPEventFormModal = function () {
         this.uniqueID = uniqueID;
         this.id = null;
         this.modal = null;
-        this.options = $.extend({
+        this.options = Object.assign({
             url: null,
             edit: false,
             onWillShow: null,
@@ -1608,8 +1788,6 @@ var CPEventFormModal = function () {
             this.modal = $('#' + this.uniqueID);
             // reset/set listeners
             this.listeners();
-            // initialize date pickers
-            // this.initializePickers();
         }
     }, {
         key: 'render',
@@ -1642,9 +1820,9 @@ var CPEventFormModal = function () {
         value: function html() {
             var _this3 = this;
 
-            return '<div class="' + this.PREFIX + '-modal">\n            <div class="' + this.PREFIX + '-backdrop">&nbsp;</div>\n            <div class="' + this.PREFIX + '-content">\n                <div class="' + this.PREFIX + '-dialog">\n                    <form action="javascript:;" class="' + this.PREFIX + '-form" method="POST">\n                        <fieldset>\n                           ' + (this.options.fieldsList.constructor == Array ? this.options.fieldsList.map(function (group, index) {
+            return ('\n            <div class="' + this.PREFIX + '-modal">\n                <div class="' + this.PREFIX + '-backdrop">&nbsp;</div>\n                <div class="' + this.PREFIX + '-content">\n                    <div class="' + this.PREFIX + '-dialog">\n                        <form action="javascript:;" class="' + this.PREFIX + '-form" method="POST">\n                            <fieldset>\n                            ' + (this.options.fieldsList.constructor == Array ? this.options.fieldsList.map(function (group, index) {
                 return _this3.renderFieldsList(group, index);
-            }).join('') : null) + '\n                            <div class="' + this.PREFIX + '-actions">\n                                ' + (this.options.editting ? '<button type="button" \n                                        class="' + this.PREFIX + '-button delete"\n                                    > Delete </button>' : "") + '\n                                <button type="button" class="' + this.PREFIX + '-button ' + this.CLASSNAMES().CANCEL + '">Cancel</button>\n                                <button type="submit" class="' + this.PREFIX + '-button ' + this.CLASSNAMES().SAVE + '">Save</button>\n                            </div>\n                        </fieldset>\n                    </form>\n                </div>\n            </div>\n        </div>';
+            }).join('') : null) + '\n                                <div class="' + this.PREFIX + '-actions">\n                                    ' + (this.options.editting ? '<button type="button" \n                                            class="' + this.PREFIX + '-button delete"\n                                        > Delete </button>' : "") + '\n                                    <button type="button" class="' + this.PREFIX + '-button ' + this.CLASSNAMES().CANCEL + '">Cancel</button>\n                                    <button type="submit" class="' + this.PREFIX + '-button ' + this.CLASSNAMES().SAVE + '">Save</button>\n                                </div>\n                            </fieldset>\n                        </form>\n                    </div>\n                </div>\n            </div>\n        ').trim();
         }
     }, {
         key: 'renderFieldsList',
@@ -1673,6 +1851,9 @@ var CPEventFormModal = function () {
                         break;
                     case 'select':
                         this.fields.push(new CPFSelect(container, _extends({}, field)));
+                        break;
+                    case 'radio':
+                        this.fields.push(new CPFRadioGroup(container, _extends({}, field)));
                         break;
                     case 'time':
                         this.fields.push(new CPFTime(container, _extends({}, field)));
@@ -1720,22 +1901,6 @@ var CPEventFormModal = function () {
             // check for when for transition ends
             this.modal.find(FORM).off('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handleFormTransitionEnd.bind(this));
             this.modal.find(FORM).on('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handleFormTransitionEnd.bind(this));
-        }
-    }, {
-        key: 'initializePickers',
-        value: function initializePickers() {
-            var _SELECTORS3 = this.SELECTORS(),
-                START_DATE = _SELECTORS3.START_DATE,
-                END_DATE = _SELECTORS3.END_DATE;
-            // initialize start date picker
-
-
-            this.modal.find(START_DATE).datepicker('destroy');
-            this.modal.find(START_DATE).datepicker();
-
-            // initialize end date picker
-            this.modal.find(END_DATE).datepicker('destroy');
-            this.modal.find(END_DATE).datepicker();
         }
     }, {
         key: 'handleButtonClick',
@@ -1891,9 +2056,9 @@ var CPEventFormModal = function () {
 
             // get required selectors and class names
 
-            var _SELECTORS4 = this.SELECTORS(),
-                FORM = _SELECTORS4.FORM,
-                ERROR_CONTAINER = _SELECTORS4.ERROR_CONTAINER;
+            var _SELECTORS3 = this.SELECTORS(),
+                FORM = _SELECTORS3.FORM,
+                ERROR_CONTAINER = _SELECTORS3.ERROR_CONTAINER;
 
             var _CLASSNAMES4 = this.CLASSNAMES(),
                 SHOW = _CLASSNAMES4.SHOW;
@@ -1916,9 +2081,9 @@ var CPEventFormModal = function () {
         key: 'hideValidationError',
         value: function hideValidationError() {
             // get required selectors and class names
-            var _SELECTORS5 = this.SELECTORS(),
-                FORM = _SELECTORS5.FORM,
-                ERROR_CONTAINER = _SELECTORS5.ERROR_CONTAINER;
+            var _SELECTORS4 = this.SELECTORS(),
+                FORM = _SELECTORS4.FORM,
+                ERROR_CONTAINER = _SELECTORS4.ERROR_CONTAINER;
 
             var _CLASSNAMES5 = this.CLASSNAMES(),
                 SHOW = _CLASSNAMES5.SHOW;
@@ -1939,10 +2104,10 @@ var CPEventFormModal = function () {
         key: 'disable',
         value: function disable(state) {
             // get selectors
-            var _SELECTORS6 = this.SELECTORS(),
-                FORM = _SELECTORS6.FORM,
-                FIELDSET = _SELECTORS6.FIELDSET,
-                BUTTON = _SELECTORS6.BUTTON;
+            var _SELECTORS5 = this.SELECTORS(),
+                FORM = _SELECTORS5.FORM,
+                FIELDSET = _SELECTORS5.FIELDSET,
+                BUTTON = _SELECTORS5.BUTTON;
             // convert state to proper type
 
 
@@ -1975,12 +2140,11 @@ var CPEventFormModal = function () {
             var url = this.buildUrl();
             // stop if no url was specified
             if (url == null) return;
-            console.log(this.getFormData());
             // join default data and form data
-            var data = $.extend({}, this.options.data, this.getFormData());
+            var data = Object.assign({}, this.options.data, this.getFormData());
             data = this.addStructs(data);
             // join default headers with custom headers
-            var headers = $.extend({}, this.options.headers);
+            var headers = Object.assign({}, this.options.headers);
             // disable form
             this.disable(true);
             // make ajax post request and try to save new event
@@ -2042,9 +2206,9 @@ var CPEventFormModal = function () {
             // stop if no url was specified
             if (url == null) return;
             // join default data and form data
-            var data = $.extend({}, this.options.data);
+            var data = Object.assign({}, this.options.data);
             // join default headers with custom headers
-            var headers = $.extend({}, this.options.headers);
+            var headers = Object.assign({}, this.options.headers);
             // disable form
             this.disable(true);
             // make ajax post request and try to delete new event
@@ -2093,10 +2257,8 @@ var CPEventFormModal = function () {
                 if (regex.test(url)) {
                     url = url.replace(regex, this.id);
                 } else {
-                    this.options.data = $.extend({}, this.options.data, { id: this.id });
+                    this.options.data = Object.assign({}, this.options.data, { id: this.id });
                 }
-            } else {
-                url = url;
             }
             return url;
         }
@@ -2109,6 +2271,7 @@ var CPEventFormModal = function () {
                 }
             }
             $(this.uniqueID).remove();
+            this.fields = [];
         }
     }]);
 
@@ -2229,6 +2392,9 @@ var CPField = function () {
                     case 'time':
                         $(this.containerSelector).children("input[type=\"" + this.type + "\"]").val(this.props.defaultValue);
                         break;
+                    case 'radio':
+                        $(this.containerSelector).children("input[value=\"" + this.props.defaultValue + "\"]").props('checked', true);
+                        break;
                     case 'date':
                         $(this.containerSelector).children('input[type="date"]').val(this.formatDate(this.props.defaultValue));
                         break;
@@ -2276,6 +2442,11 @@ var CPField = function () {
         value: function setValue(value) {
             if (this.type == 'date') {
                 value = this.formatDate(value);
+            }
+
+            if (this.type == 'radio') {
+                $(this.containerSelector).children(this.htmlType() + "[value=\"" + value + "\"]").prop('checked', true);
+                return;
             }
 
             $(this.containerSelector).children(this.htmlType() + "[name=\"" + this.name + "\"]").val(value);
@@ -2347,6 +2518,67 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var CPFRadioGroup = function (_CPField) {
+    _inherits(CPFRadioGroup, _CPField);
+
+    function CPFRadioGroup(container, props) {
+        _classCallCheck(this, CPFRadioGroup);
+
+        var _this = _possibleConstructorReturn(this, (CPFRadioGroup.__proto__ || Object.getPrototypeOf(CPFRadioGroup)).call(this, container, props));
+
+        Object.defineProperty(_this, 'renderOptions', {
+            enumerable: true,
+            writable: true,
+            value: function value(_value, label) {
+                return (' \n            <div\n                class="' + _this.prefix + '-form-control radio-group"\n            >\n                <label class="' + _this.prefix + '-radio-option">\n                    <input\n                        name="' + _this.props.name + '"\n                        type="radio" \n                        value="' + _value + '"\n                        ' + (_this.props.defaultValue == _value ? "checked" : "") + '\n                    />\n                    <span>' + label + '</span>\n                </label>\n            </div>\n        ').trim();
+            }
+        });
+
+        _this.type = 'radio';
+        return _this;
+    }
+
+    _createClass(CPFRadioGroup, [{
+        key: 'content',
+        value: function content() {
+            var _this2 = this;
+
+            if (this.props.options.constructor != Object) {
+                return '';
+            }
+            var options = _extends({}, this.props.options);
+            var optionKeys = Object.keys(options);
+            return '\n            <div class="' + this.prefix + '-control-group radio-group" ' + this.idAttribute + '="' + this.id + '">\n                ' + this.label() + '\n                ' + optionKeys.map(function (key) {
+                return _this2.renderOptions(key, options[key]);
+            }).join("") + '\n            </div>\n        ';
+        }
+    }, {
+        key: 'getValue',
+        value: function getValue() {
+            var radioButtons = $(this.containerSelector).find(this.fieldSelector);
+
+            for (var i = 0; i <= radioButtons.length; i++) {
+                var radioButton = radioButtons.eq(i);
+                if (radioButton.is(':checked')) {
+                    return radioButton.val();
+                }
+            }
+            return '';
+        }
+    }]);
+
+    return CPFRadioGroup;
+}(CPField);
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var CPFSelect = function (_CPField) {
     _inherits(CPFSelect, _CPField);
 
@@ -2354,6 +2586,14 @@ var CPFSelect = function (_CPField) {
         _classCallCheck(this, CPFSelect);
 
         var _this = _possibleConstructorReturn(this, (CPFSelect.__proto__ || Object.getPrototypeOf(CPFSelect)).call(this, container, props));
+
+        Object.defineProperty(_this, 'renderOptions', {
+            enumerable: true,
+            writable: true,
+            value: function value(_value, label) {
+                return ('<option \n            value="' + _value + '"\n            ' + (_this.props.defaultValue == _value ? "selected" : "") + '\n        >\n            ' + label + '\n        </option>').trim();
+            }
+        });
 
         _this.type = 'select';
         return _this;
@@ -2372,11 +2612,6 @@ var CPFSelect = function (_CPField) {
             return '\n            <div class="' + this.prefix + '-control-group" ' + this.idAttribute + '="' + this.id + '">\n                ' + this.label() + '\n                <select\n                    name="' + this.props.name + '"\n                    class="' + this.prefix + '-form-control"\n                >\n                    ' + optionKeys.map(function (key) {
                 return _this2.renderOptions(key, options[key]);
             }).join("") + '\n                </select>\n            </div>\n        ';
-        }
-    }, {
-        key: 'renderOptions',
-        value: function renderOptions(value, label) {
-            return ('<option \n                    value="' + value + '"\n                    ' + (this.props.defaultValue == value ? "selected" : "") + '\n                >\n                    ' + label + '\n                </option>').trim();
         }
     }]);
 

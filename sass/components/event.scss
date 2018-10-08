@@ -35,7 +35,7 @@
         border-right-width: 1px;
     }
 
-    &.highlighted{
+    &.highlighted, &.#{$eventnamespace}-event-selected{
         background-color: $highlighted-color;
         border-color: darken($highlighted-color, 5%);
         @include box-shadow(0px 0px 40px -5px rgba(0,0,0,0.6));

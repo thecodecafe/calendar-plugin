@@ -20,6 +20,8 @@
     <script type='text/javascript'>
         $('#calendar').CalendarPlugin({
             url: 'http://localhost:8040/php/events.php',
+            view: 'weekly',
+            disableForm: true,
             form: [
                 [
                     {
@@ -33,6 +35,14 @@
                         name: 'lastName',
                         label: 'Last Name',
                         placeholder: 'Enter your last name here'
+                    }
+                ],
+                [
+                    {
+                        type: 'radio',
+                        name: 'happiness-level',
+                        label: 'Happiness Level',
+                        options: { meh: 'Meh', very: 'Very', veryVery: 'Very Very' }
                     }
                 ],
                 [

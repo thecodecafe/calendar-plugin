@@ -28,9 +28,9 @@ class CPField {
             .call(this.handleCompletedRender.bind(this));
     }
 
-    label(){
-        if(typeof this.props.label == 'string'){
-            return`
+    label() {
+        if (typeof this.props.label == 'string') {
+            return `
                 <label 
                     for="${this.props.name}"
                 >
@@ -72,6 +72,11 @@ class CPField {
                     $(this.containerSelector)
                         .children(`input[type="${this.type}"]`)
                         .val(this.props.defaultValue);
+                    break;
+                case 'radio':
+                    $(this.containerSelector)
+                        .children(`input[value="${this.props.defaultValue}"]`)
+                        .props('checked', true);
                     break;
                 case 'date':
                     $(this.containerSelector)
@@ -120,6 +125,13 @@ class CPField {
             value = this.formatDate(value);
         }
 
+        if (this.type == 'radio') {
+            $(this.containerSelector)
+                .children(`${this.htmlType()}[value="${value}"]`)
+                .prop('checked', true);
+            return;
+        }
+
         $(this.containerSelector)
             .children(`${this.htmlType()}[name="${this.name}"]`)
             .val(value);
@@ -131,7 +143,7 @@ class CPField {
             .val();
     }
 
-    htmlType(){
+    htmlType() {
         switch (this.props.type) {
             case 'long-text':
                 return 'textarea';

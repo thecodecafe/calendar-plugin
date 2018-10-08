@@ -24,15 +24,15 @@ class CPFSelect extends CPField {
         `;
     }
 
-    renderOptions(value, label){
-        return `<option 
-                    value="${value}"
-                    ${this.props.defaultValue == value 
-                        ? "selected" 
-                        : ""
-                    }
-                >
-                    ${label}
-                </option>`.trim();
-    }
+    renderOptions = (value, label) => (
+        `<option 
+            value="${value}"
+            ${this.props.defaultValue == value 
+                ? "selected" 
+                : ""
+            }
+        >
+            ${label}
+        </option>`.trim()
+    )
 }

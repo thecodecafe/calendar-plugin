@@ -132,6 +132,9 @@ class CPEventFormModal {
                 case 'select':
                     this.fields.push( new CPFSelect(container, { ...field }) );
                     break;
+                case 'radio':
+                    this.fields.push( new CPFRadioGroup(container, { ...field }) );
+                    break;
                 case 'time':
                     this.fields.push( new CPFTime(container, { ...field }) );
                     break;
@@ -364,7 +367,6 @@ class CPEventFormModal {
         var url = this.buildUrl();
         // stop if no url was specified
         if (url == null) return;
-        console.log(this.getFormData());
         // join default data and form data
         var data = Object.assign({}, this.options.data, this.getFormData());
         data = this.addStructs(data);

@@ -53,6 +53,7 @@
                 float: left;
                 width: 100%;
                 margin-top: 100px;
+                margin-bottom: 100px;
                 padding: 30px 20px 0px;
                 background-color: #fff;
                 @include transform(scale(0.9));
@@ -136,6 +137,31 @@
                             color: #666;
                             margin-bottom: 5px;
                             display: inline-block;
+                            &.#{$eventform}-radio-option{
+                                text-transform: initial;
+                                font-size: initial;
+                                font-weight: initial;
+                            }
+                        }
+
+                        .#{$eventform}-control-group{
+                            position: relative;
+                            float: left;
+                            width: 100%;
+                            margin-bottom: 8px;
+
+                            >label{
+                                &:first-child{
+                                    width: 100%;
+                                    margin-bottom: 5px;
+                                }
+                            }
+                            .#{$eventform}-form-control{
+                                &.radio-group{
+                                    display: inline-block;
+                                    margin-right:16px;
+                                }
+                            }
                         }
                     }
                 }
@@ -244,6 +270,7 @@
         }
 
         .#{$eventform}-content{
+            overflow: auto;
             .#{$eventform}-dialog{
                 .#{$eventform}-form{
                     opacity: 1;

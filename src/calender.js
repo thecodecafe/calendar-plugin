@@ -64,6 +64,12 @@
         ADD_MENU_BUTTON            : PREFIX+'-add-menu-button',
         ADD_MENU_ABOVE             : PREFIX+'-add-menu-above',
         ADD_MENU_VISIBLE           : PREFIX+'-add-menu-visible',
+        EVENT_MENU_CONTAINER         : PREFIX+'-event-menu',
+        EVENT_MENU_INNER             : PREFIX+'-event-menu-inner',
+        EVENT_MENU_BUTTONS_CONTAINER : PREFIX+'-event-menu-buttons-container',
+        EVENT_MENU_BUTTON            : PREFIX+'-event-menu-button',
+        EVENT_MENU_ABOVE             : PREFIX+'-event-menu-above',
+        EVENT_MENU_VISIBLE           : PREFIX+'-event-menu-visible',
         VIEWS_LIST_CONTAINER       : PREFIX+'-view-list-container',
         VIEWS_LIST                 : PREFIX+'-view-list',
         VIEWS_ITEM                 : PREFIX+'-view',
@@ -107,6 +113,10 @@
         ADD_MENU_INNER             : '.'+PREFIX+'-add-menu-inner',
         ADD_MENU_BUTTON            : '.'+PREFIX+'-add-menu-button',
         ADD_MENU_BUTTONS_CONTAINER : '.'+PREFIX+'-add-menu-buttons-container',
+        EVENT_MENU_CONTAINER         : '.'+PREFIX+'-event-menu',
+        EVENT_MENU_INNER             : '.'+PREFIX+'-event-menu-inner',
+        EVENT_MENU_BUTTON            : '.'+PREFIX+'-event-menu-button',
+        EVENT_MENU_BUTTONS_CONTAINER : '.'+PREFIX+'-event-menu-buttons-container',
         VIEWS_LIST_CONTAINER       : '.'+PREFIX+'-view-list-container',
         VIEWS_LIST                 : '.'+PREFIX+'-view-list',
         VIEWS_ITEM                 : '.'+PREFIX+'-view',
@@ -120,7 +130,7 @@
      * html month templates for all the different parts of the calendar
      */
     const TEMPLATES = {
-        CONTAINER: "<div class='"+CLASSNAMES.CONTAINER+"' id='"+SELECTORS.CONTAINER_ID+"'>{header}{calendar}{add_menu}</div>",
+        CONTAINER: "<div class='"+CLASSNAMES.CONTAINER+"' id='"+SELECTORS.CONTAINER_ID+"'>{header}{calendar}{add_menu}{event_menu}</div>",
         MAIN: "<table class='"+CLASSNAMES.CALENDAR+" {classnames}'  cellspacing='0' cellpadding='0'><thead>{heading}</thead><tbody>{content}</tbody></table>",
         DAYS_HEADING: "<tr class='"+CLASSNAMES.MONTH_HEADING+"'> <th>Sun</th> <th>Mon</th> <th>Tue</th> <th>Wed</th> <th>Thur</th> <th>Fri</th> <th>Sat</th> </tr>",
         WEEK_ROW: "<tr class='"+CLASSNAMES.WEEK_ROW+"' data-row='{row}'>{content}</tr>",
@@ -217,8 +227,9 @@
                 creatRequest: null,
                 editRequest: null,
                 view: 'monthly',
-                hideViewOptions: false,
-                form: []
+                changableView: true,
+                form: [],
+                disableForm: false,
             }, options);
 
             // configure seasons
@@ -323,6 +334,7 @@
                     "<tbody>"+renderWeeklyBody()+"</tbody>"+
                 "</table>"+
                 renderAddMenu()+
+                renderEventMenu()+
             "</div>";
         }
 
@@ -334,7 +346,23 @@
                     "<tbody>"+renderDailyBody()+"</tbody>"+
                 "</table>"+
                 renderAddMenu()+
+                renderEventMenu()+
             "</div>";
+        }
+
+        const renderEventMenu = function (){
+            return `
+                <div class='${CLASSNAMES.EVENT_MENU_CONTAINER}' id='eventMenuComponent'>
+                    <div class='${CLASSNAMES.EVENT_MENU_INNER}'>
+                        <div class='${CLASSNAMES.EVENT_MENU_BUTTONS_CONTAINER}'>
+                            <button class='${CLASSNAMES.EVENT_MENU_BUTTON}' type='button' data-action='edit-event'>Edit Event</button>
+                            <button class='${CLASSNAMES.EVENT_MENU_BUTTON}' type='button' data-action='copy-event'>Copy Event</button>
+                            <button class='${CLASSNAMES.EVENT_MENU_BUTTON} cancel' data-action='cancel' type='button'>Cancel</button>
+                        </div>
+                        <span class='caret'></span>
+                    </div>
+                </div>
+            `.trim();
         }
 
         const renderDailyHeading = function()
@@ -447,6 +475,9 @@
         }
 
         const renderViewOptions = function(){
+            if(!self.settings.changableView){
+                return'';
+            }
             return "<div class='"+CLASSNAMES.VIEWS_LIST_CONTAINER+"'><ul class='"+CLASSNAMES.VIEWS_LIST+"'>"+
                 "<li class='"+CLASSNAMES.VIEWS_ITEM+"'>"+
                     "<button type='button' class='"+CLASSNAMES.VIEW_BUTTON+" daily' data-toggle='calendar-view' data-option='daily'>Day</button>"+
@@ -461,6 +492,9 @@
         }
 
         const renderAddMenu = function(){
+            if(self.settings.disableForm){
+                return '';
+            }
             return "<div class='"+CLASSNAMES.ADD_MENU_CONTAINER+"' id='addMenuComponent'>"+
                 "<div class='"+CLASSNAMES.ADD_MENU_INNER+"'>"+
                     "<div class='"+CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER+"'>"+
@@ -473,6 +507,7 @@
                 "</div>"+
             "</div>";
         }
+
         const renderEvents = function()
         {
             // destroy old events first
@@ -544,7 +579,7 @@
         const start = function()
         {
             // get required selectors
-            var {CONTAINER, ADD_MENU_BUTTON, EXPORT_BUTTON} = SELECTORS; 
+            var {CONTAINER, ADD_MENU_BUTTON, EXPORT_BUTTON, EVENT_MENU_BUTTON} = SELECTORS; 
 
             // resize calendar
             resizeCalendar();
@@ -563,6 +598,10 @@
             // listen for click on add menu buttons
             $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handleAddMenuButtonClick);
             $(CONTAINER).find(ADD_MENU_BUTTON).on('click', handleAddMenuButtonClick);
+
+            // listen for click on event menu buttons
+            $(CONTAINER).find(EVENT_MENU_BUTTON).off('click', handleEventMenuButtonClick);
+            $(CONTAINER).find(EVENT_MENU_BUTTON).on('click', handleEventMenuButtonClick);
 
             // listen for click on export button
             $(CONTAINER).find(EXPORT_BUTTON).off('click', exportTo);
@@ -591,8 +630,6 @@
             var days_heading_tpl = copyVar(TEMPLATES.DAYS_HEADING);
             var cell_tpl = copyVar(TEMPLATES.DAY_CELL);
             var week_tpl = copyVar(TEMPLATES.WEEK_ROW);
-            var view_options = !self.settings.hideViewOptions ? copyVar(TEMPLATES.VIEWS) : '';
-            var add_menu = copyVar(TEMPLATES.ADD_MENU);
             var month_name = getMonthName(self.settings.month - 1);
             var season = getSeason();
             var weeks = '';
@@ -670,6 +707,8 @@
             container_tpl = container_tpl.replace('{calendar}', calendar_tpl);
             // add, add menu
             container_tpl = container_tpl.replace('{add_menu}', renderAddMenu());
+            // add, edit menu
+            container_tpl = container_tpl.replace('{event_menu}', renderEventMenu())
 
             // return generated calendar
             return container_tpl;
@@ -803,6 +842,8 @@
             if(settings.view == 'daily'){
                 changeDate(direction);
             }
+
+            cancelEventSelection();
         }
 
         const changeMonth = function(direction){
@@ -916,6 +957,44 @@
             start();
         }
 
+        const handleEventMenuButtonClick = function(ev)
+        {
+            // get required selectors
+            var {CONTAINER, ADD_MENU_BUTTON} = SELECTORS; 
+
+            // turn click event listener off
+            $(CONTAINER).find(ADD_MENU_BUTTON).off('click', handleAddMenuButtonClick);
+
+            // get element
+            var el = $(ev.currentTarget);
+            var action = el.attr('data-action');
+            switch(action){
+                case 'edit-event':
+                    // pop up modal
+                    self.editFormModal.show(
+                        self.selectedEvent,
+                        self.selectedEvent.id
+                    );
+                break;
+                case 'copy-event':
+                    // pop up modal
+                    // copyEvent();
+                break;
+                case 'cancel':
+                    // cancel selection
+                    cancelEventSelection();
+                break;
+                default:
+                    // do nothing
+                break;
+            }
+
+            cancelEventSelection();
+
+            // start listening for click events on add menu buttons again
+            start();
+        }
+
         const addEvent = function()
         {
             // get start and end
@@ -947,22 +1026,59 @@
             updateSelection();
         }
 
-        const handleEventClick = function(event)
-        {
-            // create start and end date
-            var startDate = new Date(event.startDate);
-            var endDate = new Date(event.endDate);
+        const cancelEventSelection = function(){
+            toggleSelectedEventHighlight(true);
+            self.selectedEvent = undefined;
+            self.selectedEventTarget = undefined;
+            toggleEventMenuVisiblity();
+        }
 
-            // create new event data
-            var data = Object.assign({}, event, {
-                title: event.title,
+        const handleEventClick = function(eventData, ev)
+        {
+            if(self.settings.disableForm){
+                return;
+            }
+
+            // create start and end date
+            var startDate = new Date(eventData.startDate);
+            var endDate = new Date(eventData.endDate);
+
+            // create new eventData data
+            var data = Object.assign({}, eventData, {
+                title: eventData.title,
                 startDate,
                 endDate,
-                startTime: event.startTime,
-                endTime: event.endTime
+                startTime: eventData.startTime,
+                endTime: eventData.endTime
             });
 
-            self.editFormModal.show(data, event.id);
+            // deselect previously selected event
+            toggleSelectedEventHighlight(true);
+
+            // set selected eventData
+            self.selectedEvent = Object.assign({}, data);
+            self.selectedEventTarget = $(ev.currentTarget);
+
+            // highlight selected events
+            toggleSelectedEventHighlight();
+
+            // console.log(ev.currentTarget);
+            toggleEventMenuVisiblity();
+
+            // self.editFormModal.show(data, eventData.id);
+        }
+
+        const toggleSelectedEventHighlight = function(remove){
+            if(self.selectedEventTarget){
+                let eventButtons = $('.cp-ev-event[data-evid='+self.selectedEventTarget.attr('data-evid')+']');
+                if(eventButtons.length > 0){
+                    if(remove){
+                        eventButtons.removeClass('cp-ev-event-selected');
+                        return;
+                    }
+                    eventButtons.addClass('cp-ev-event-selected');
+                }
+            }
         }
 
         const listenForDateSelect = function()
@@ -977,6 +1093,10 @@
             // turn off click event listener
             var {DATE_DAY} = SELECTORS;
             $(DATE_DAY).off('click', handleDateSelect);
+
+            if(self.settings.disableForm){
+                return;
+            }
 
             // get element and date
             var el = ev.currentTarget;
@@ -1081,6 +1201,7 @@
                 if(!addMenuEl.hasClass(ADD_MENU_VISIBLE))
                 {
                     addMenuEl.addClass(ADD_MENU_VISIBLE);
+                    cancelEventSelection();
                 }
             }
             else
@@ -1093,6 +1214,85 @@
             
             // reposition add menu
             repositionAddmenu();
+        }
+
+        const toggleEventMenuVisiblity = function()
+        {
+            // get plugin html selector references
+            var {CONTAINER, EVENT_MENU_CONTAINER, DATE_SELECTED} = SELECTORS;
+            // get required classnames
+            var {EVENT_MENU_VISIBLE} = CLASSNAMES;
+
+            // select elements
+            var container = $(CONTAINER);
+            var selected = container.find(DATE_SELECTED);
+            var eventMenuEl = container.find(EVENT_MENU_CONTAINER);
+
+            // toggle visibility
+            if(self.selectedEventTarget && self.selectedEventTarget.length > 0)
+            {
+                if(!eventMenuEl.hasClass(EVENT_MENU_VISIBLE))
+                {
+                    eventMenuEl.addClass(EVENT_MENU_VISIBLE);
+                    cancelSelection();
+                }
+            }
+            else
+            {
+                if(eventMenuEl.hasClass(EVENT_MENU_VISIBLE))
+                {
+                    eventMenuEl.removeClass(EVENT_MENU_VISIBLE);
+                }
+                self.selectedEventTarget = undefined;
+            }
+            
+            // reposition event menu
+            repositionEventmenu();
+        }
+
+        const repositionEventmenu = function()
+        {
+            // get plugin html selector references
+            var {EVENT_MENU_CONTAINER, DATE_CELL_CONTENT, CONTAINER} = SELECTORS;
+            var {EVENT_MENU_ABOVE} = CLASSNAMES;
+
+            // get end element
+            var end = self.selectedEventTarget;
+            var container = $(CONTAINER);
+            var eventMenuEl = container.find(EVENT_MENU_CONTAINER);
+            var viewport = getViewport();
+
+            if(end != null && end != undefined)
+            {
+                var offset = end.offset();
+                var left = offset ? offset.left : 0;
+                var top = offset ? ( offset.top + end.outerHeight() ) - 10 : 0;
+
+                if(end.outerWidth() > eventMenuEl.outerWidth())
+                {
+                    left = left + ( (end.outerWidth() - eventMenuEl.outerWidth()) / 2 )
+                }
+                else
+                {
+                    left = left - ( (eventMenuEl.outerWidth() - end.outerWidth()) / 2 )
+                }
+
+                if((eventMenuEl.outerHeight() + top) > viewport.height)
+                { 
+                    top = offset ? (offset.top - eventMenuEl.outerHeight()) + 10 : 0;
+                    if(!eventMenuEl.hasClass(EVENT_MENU_ABOVE))
+                    { eventMenuEl.addClass(EVENT_MENU_ABOVE); }
+                }
+                else
+                {
+                    if(eventMenuEl.hasClass(EVENT_MENU_ABOVE))
+                    { eventMenuEl.removeClass(EVENT_MENU_ABOVE); }
+                }
+
+                // add css positions to element
+                eventMenuEl.css({'top': top, 'left': left});
+
+            }
         }
 
         const repositionAddmenu = function()
