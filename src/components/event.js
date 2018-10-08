@@ -108,7 +108,7 @@ class CPEvent
 
     handle_on_click(ev)
     {
-        this.options.onClick(this.data);
+        this.options.onClick(this.data, ev);
     }
 
     handle_on_mouse_enter(ev)

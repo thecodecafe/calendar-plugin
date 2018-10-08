@@ -30,7 +30,12 @@ const configs = {
         PUBLIC_DIR: path.join(__dirname, 'examples')
     },
     js: {
-        source: [path.join(__dirname, 'src/*.js'), path.join(__dirname, 'src/**/*.js')],
+        source: [
+            path.join(__dirname, 'src/*.js'),
+            path.join(__dirname, 'src/components/*.js'),
+            path.join(__dirname, 'src/fields/_Field.js'),
+            path.join(__dirname, 'src/fields/*.js')
+        ],
         watch: [path.join(__dirname, 'src/*.js'), path.join(__dirname, 'src/**/*.js')],
         dest: path.join(__dirname, 'dist/js'),
         examples: path.join(__dirname, 'examples/js')
@@ -134,11 +139,17 @@ gulp.task('js', function()
             presets: [
                 "react", 
                 [
-                  "es2015",
-                  {
-                    "modules": false
-                  }
+                    "env", {
+                    "targets": {
+                        "browsers": ["last 2 versions", "safari >= 7"]
+                    },
+                        "modules": false
+                    }
                 ]
+            ],
+            "plugins": [
+                ["transform-class-properties", { "spec": true }],
+                ["transform-object-rest-spread"]
             ]
         }),
         sourcemaps.init(),

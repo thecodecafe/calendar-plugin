@@ -1,0 +1,157 @@
+.#{$namespace}-event-menu
+    {
+        position: absolute;
+        left: 100px;
+        top: 300px;
+        z-index: 30;
+        max-width: 200px;
+        visibility: hidden;
+        opacity: 0;
+        @include transform(scale(0));
+        @include transform-origin(center top);
+        @include transition(transform 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55), 
+                            opacity 600ms ease-in-out, 
+                            visibility 600ms ease-in-out);
+
+        &.#{$namespace}-event-menu-visible
+        {
+            visibility: visible;
+            opacity: 1;
+            @include transform(scale(1));
+        }
+
+        .#{$namespace}-event-menu-inner
+        {
+            position: relative;
+            float: left;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column-reverse;
+
+            .#{$namespace}-event-menu-buttons-container
+            {
+                position: relative;
+                float: left;
+                width: 100%;
+                @include border-radius(10px);
+                @include box-shadow(0px 0px 3px rgba(0,0,0, 0.3));
+                overflow: hidden;
+
+                .#{$namespace}-event-menu-button
+                {
+                    display: inline-block;
+                    background-color: #ffffff;
+                    border: 0px;
+                    color: $link-color;
+                    padding: 7px 15px;
+                    width: 100%;
+                    font-size: 0.8em;
+                    outline: none;
+                    border-bottom: solid 1px #f8f8f8;
+
+                    &:last-child
+                    {
+                        border-bottom: none;
+                    }
+    
+                    &:hover
+                    {
+                        color: $link-color-hover;
+                        cursor: pointer;
+                    }
+
+                    &.cancel
+                    {
+                        color: $link-color-danger;
+    
+                        &:hover
+                        {
+                            color: $link-color-danger-hover;
+                            cursor: pointer;
+                        }
+                    }
+                }
+            }
+
+
+            .caret
+            {
+                position: relative;
+                float: left;
+                width: 20px;
+                height: 20px;
+
+                &::before
+                {
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    content: ' ';
+                    border-top: solid 10px rgba(0,0,0,0);
+                    border-bottom: solid 10px rgba(0,0,0, 0.06);
+                    border-left: solid 10px rgba(0,0,0,0);
+                    border-right: solid 10px rgba(0,0,0,0);
+                }
+
+                &::after
+                {
+                    position: absolute;
+                    left: 0;
+                    top: 2px;
+                    content: ' ';
+                    border-top: solid 10px rgba(#ffffff, 0);
+                    border-bottom: solid 10px rgba(#ffffff, 1);
+                    border-left: solid 10px rgba(#ffffff, 0);
+                    border-right: solid 10px rgba(#ffffff, 0);
+                    @include transform(scale(0.8));
+                }
+            }
+        }
+
+        &.#{$namespace}-event-menu-above
+        {
+            @include transform-origin(center bottom);
+
+            .#{$namespace}-event-menu-inner
+            {
+                flex-direction: column;
+    
+                .caret
+                {
+                    position: relative;
+                    float: left;
+                    width: 20px;
+                    height: 20px;
+    
+                    &::before
+                    {
+                        position: absolute;
+                        left: 0;
+                        top: initial;
+                        bottom: 0px;
+                        content: ' ';
+                        border-top: solid 10px rgba(0,0,0,0.06);
+                        border-bottom: solid 10px rgba(0,0,0, 0);
+                        border-left: solid 10px rgba(0,0,0,0);
+                        border-right: solid 10px rgba(0,0,0,0);
+                    }
+    
+                    &::after
+                    {
+                        position: absolute;
+                        left: 0;
+                        top: initial;
+                        bottom: 2px;
+                        content: ' ';
+                        border-top: solid 10px rgba(#ffffff, 1);
+                        border-bottom: solid 10px rgba(#ffffff, 0);
+                        border-left: solid 10px rgba(#ffffff, 0);
+                        border-right: solid 10px rgba(#ffffff, 0);
+                        @include transform(scale(0.8));
+                    }
+                }
+            }
+        }
+
+    }

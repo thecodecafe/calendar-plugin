@@ -2,6 +2,7 @@
     position: relative;
     float: left;
     width: 100%;
+    font-family: 'Roboto', sans-serif;
     box-sizing: border-box;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -63,7 +64,10 @@
             position: relative;
             float: left;
             width: 100%;
-            margin-bottom: 15px;
+
+            &+.#{$namespace}-view-list-container{
+                margin-top: 15px;
+            }
 
             .#{$namespace}-header-options-container{ 
                 position: relative;
@@ -311,7 +315,6 @@
             {
                 text-align: right;
                 padding: 20px 20px;
-                width: (100% / 7);
             }
         }
 
@@ -373,7 +376,6 @@
 
             &.weekly, &.daily{
                 td{
-                    width: initial;
                     background-color: #ffffff;
                     border-right: solid 1px #cccccc;
                     border-bottom: solid 1px #cccccc;
@@ -555,6 +557,81 @@
                         background-image: url('../images/wallpapers/december.jpg');
                     }
                 }   
+            }
+        }
+
+        &.monthly
+        {   
+            display: block;
+            width: 100%;
+
+            tr.#{$namespace}-month-heading
+            {
+                th
+                {
+                    width: (100% / 7);
+                }
+            }
+
+            >thead, >tbody{
+                display: block;
+                width: 100%;
+                >tr{
+                    display: flex;
+                    >th, >td{
+                        flex: 1;
+                    }
+                }
+            }
+        }
+
+        &.weekly
+        {   
+            display: block;
+            width: 100%;
+            >thead, >tbody{
+                display: block;
+                width: 100%;
+                >tr{
+                    display: flex;
+                    >th, >td{
+                        flex: 1;
+                        &:first-child{
+                            flex: initial;
+                            width: 150px;
+                            text-align: right;
+                            padding: 15px 15px;
+                        }
+                        .cp-date-content{
+                            min-height: 75px;
+                        }
+                    }
+                }
+            }
+        }
+
+        &.daily
+        {   
+            display: block;
+            width: 100%;
+            >thead, >tbody{
+                display: block;
+                width: 100%;
+                >tr{
+                    display: flex;
+                    >th, >td{
+                        flex: 4;
+                        &:first-child{
+                            flex: initial;
+                            width: 150px;
+                            text-align: right;
+                            padding: 15px 15px;
+                        }
+                        .cp-date-content{
+                            min-height: 75px;
+                        }
+                    }
+                }
             }
         }
 
