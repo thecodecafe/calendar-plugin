@@ -125,6 +125,10 @@ class CPField {
             value = this.formatDate(value);
         }
 
+        if (this.type == 'datetime') {
+           return;
+        }
+
         if (this.type == 'radio') {
             $(this.containerSelector)
                 .children(`${this.htmlType()}[value="${value}"]`)

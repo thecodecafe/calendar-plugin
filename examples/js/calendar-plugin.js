@@ -1790,6 +1790,16 @@ var CPEventFormModal = function () {
             writable: true,
             value: []
         });
+        Object.defineProperty(this, 'dateTimeFields', {
+            enumerable: true,
+            writable: true,
+            value: []
+        });
+        Object.defineProperty(this, 'flatpickrs', {
+            enumerable: true,
+            writable: true,
+            value: null
+        });
 
         this.uniqueID = uniqueID;
         this.id = null;
@@ -1823,6 +1833,8 @@ var CPEventFormModal = function () {
             this.modal = $('#' + this.uniqueID);
             // reset/set listeners
             this.listeners();
+            // enable datetime fields
+            this.enableDatetieFields();
         }
     }, {
         key: 'render',
@@ -1875,26 +1887,36 @@ var CPEventFormModal = function () {
         value: function makeField(field, parent, index) {
             var id = '' + parent + this.PREFIX + '-group-item' + index;
             var container = '#' + id;
+            var composition = null;
             if (field && (typeof field === 'undefined' ? 'undefined' : _typeof(field)) == 'object' && field.constructor == Object && Object.keys(field)) {
                 // create field based on type
                 switch (field.type) {
                     case 'text':
-                        this.fields.push(new CPFText(container, _extends({}, field)));
+                        composition = new CPFText(container, _extends({}, field));
                         break;
                     case 'date':
-                        this.fields.push(new CPFDate(container, _extends({}, field)));
+                        composition = new CPFDate(container, _extends({}, field));
+                        break;
+                    case 'datetime':
+                        composition = new CPFDatetime(container, _extends({}, field));
+                        this.dateTimeFields.push(composition);
                         break;
                     case 'select':
-                        this.fields.push(new CPFSelect(container, _extends({}, field)));
+                        composition = new CPFSelect(container, _extends({}, field));
                         break;
                     case 'radio':
-                        this.fields.push(new CPFRadioGroup(container, _extends({}, field)));
+                        composition = new CPFRadioGroup(container, _extends({}, field));
                         break;
                     case 'time':
-                        this.fields.push(new CPFTime(container, _extends({}, field)));
+                        composition = new CPFTime(container, _extends({}, field));
                         break;
                 }
             }
+
+            if (composition) {
+                this.fields.push(composition);
+            }
+
             return '<div class="' + this.PREFIX + '-group-item" id="' + id + '"></div>';
         }
     }, {
@@ -1936,6 +1958,22 @@ var CPEventFormModal = function () {
             // check for when for transition ends
             this.modal.find(FORM).off('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handleFormTransitionEnd.bind(this));
             this.modal.find(FORM).on('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handleFormTransitionEnd.bind(this));
+        }
+    }, {
+        key: 'enableDatetieFields',
+        value: function enableDatetieFields() {
+            if (this.dateTimeFields.length > 0 && flatpickr !== undefined) {
+                this.flatpickrs = {};
+                for (var i = 0; i < this.dateTimeFields.length; i++) {
+                    var field = this.dateTimeFields[i];
+                    this.flatpickrs[field.name] = $(field.containerSelector).find(field.fieldSelector).flatpickr({
+                        enableTime: true,
+                        altFormat: "F J, Y \\a\\t h:i K",
+                        altInput: true,
+                        dateFormat: "Y-m-d h:iK"
+                    });
+                }
+            }
         }
     }, {
         key: 'handleButtonClick',
@@ -2025,6 +2063,10 @@ var CPEventFormModal = function () {
             // set the field values
             for (var i = 0; i < this.fields.length; i++) {
                 field = this.fields[i];
+                if (field['type'] == 'datetime' && this.flatpickrs && this.flatpickrs.constructor == Object && this.flatpickrs[field['name']]) {
+                    this.flatpickrs[field['name']].setDate(data[field.name], true);
+                    continue;
+                }
                 if (data.hasOwnProperty(field.name)) {
                     field.setValue(data[field.name]);
                 }
@@ -2302,6 +2344,9 @@ var CPEventFormModal = function () {
         value: function destroy() {
             if (this.fields || this.fields.constructor == Array) {
                 for (var i = 0; i < this.fields.length; i++) {
+                    if (thie.field[i]['type'] == 'datetime' && this.flatpickrs && this.flatpickrs.constructor == Object, this.flatpickrs[thie.field[i]['name']]) {
+                        this.flatpickrs[thie.field[i]['name']].destroy();
+                    }
                     this.fields[i].destroy();
                 }
             }
@@ -2479,6 +2524,10 @@ var CPField = function () {
                 value = this.formatDate(value);
             }
 
+            if (this.type == 'datetime') {
+                return;
+            }
+
             if (this.type == 'radio') {
                 $(this.containerSelector).children(this.htmlType() + "[value=\"" + value + "\"]").prop('checked', true);
                 return;
@@ -2542,6 +2591,35 @@ var CPFDate = function (_CPField) {
     }]);
 
     return CPFDate;
+}(CPField);
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var CPFDatetime = function (_CPField) {
+    _inherits(CPFDatetime, _CPField);
+
+    function CPFDatetime(container, props) {
+        _classCallCheck(this, CPFDatetime);
+
+        var _this = _possibleConstructorReturn(this, (CPFDatetime.__proto__ || Object.getPrototypeOf(CPFDatetime)).call(this, container, props));
+
+        _this.type = 'datetime';
+        return _this;
+    }
+
+    _createClass(CPFDatetime, [{
+        key: 'content',
+        value: function content() {
+            return '\n            <div class="' + this.prefix + '-control-group" ' + this.idAttribute + '="' + this.id + '">\n                ' + this.label() + '\n                <input \n                    type="text"\n                    name="' + this.props.name + '"\n                    autoComplete="off"\n                    class="' + this.prefix + '-form-control"\n                    placeholder="' + (this.placeholder() || '') + '"\n                />\n            </div>\n        ';
+        }
+    }]);
+
+    return CPFDatetime;
 }(CPField);
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
