@@ -273,7 +273,7 @@
             // edit new event modal
             self.editFormModal = new CPEventFormModal('edit-event'+self.now.getTime(), {
                 editting: true,
-                url: self.settings.updateUrl || self.settings.url || null,
+                url: self.settings.editUrl || self.settings.url || null,
                 deleteUrl: self.settings.deleteUrl || self.settings.url || null,
                 data: self.settings.data,
                 headers: self.settings.headers,
