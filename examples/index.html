@@ -20,7 +20,7 @@
     <script type='text/javascript'>
         $('#calendar').CalendarPlugin({
             url: 'http://localhost:8040/php/events.php',
-            view: 'weekly',
+            view: 'monthly',
             form: [
                 [
                     {
@@ -41,7 +41,7 @@
                         type: 'radio',
                         name: 'happiness-level',
                         label: 'Happiness Level',
-                        options: { meh: 'Meh', very: 'Very', veryVery: 'Very Very' }
+                        options: { meh: 'Meh', good: 'Good', very: 'Very', 'very-very': 'Very Very' }
                     }
                 ],
                 [

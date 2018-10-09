@@ -204,7 +204,9 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
                 view: 'monthly',
                 changableView: true,
                 form: [],
-                disableForm: false
+                disableForm: false,
+                escCloseEventMenu: true,
+                escCloseAddMenu: true
             }, options);
 
             // configure seasons
@@ -504,6 +506,9 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             // listen for click on export button
             $(CONTAINER).find(EXPORT_BUTTON).off('click', exportTo);
             $(CONTAINER).find(EXPORT_BUTTON).on('click', exportTo);
+
+            document.removeEventListener('keyup', handleDocumentKeyUp);
+            document.addEventListener('keyup', handleDocumentKeyUp);
 
             // listen for control button click event
             listenForControlButtonClick();
@@ -853,8 +858,8 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
                     self.editFormModal.show(self.selectedEvent, self.selectedEvent.id);
                     break;
                 case 'copy-event':
-                    // pop up modal
-                    // copyEvent();
+                    // display form with selected event's data
+                    copyEvent(self.selectedEvent);
                     break;
                 case 'cancel':
                     // cancel selection
@@ -869,6 +874,14 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
             // start listening for click events on add menu buttons again
             start();
+        };
+
+        var copyEvent = function copyEvent(data) {
+            // create new event data
+            var copyData = Object.assign({}, data);
+
+            // show modal
+            self.createFormModal.show(copyData);
         };
 
         var addEvent = function addEvent() {
@@ -905,6 +918,28 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             self.selectedEvent = undefined;
             self.selectedEventTarget = undefined;
             toggleEventMenuVisiblity();
+        };
+
+        var handleDocumentKeyUp = function handleDocumentKeyUp(event) {
+            // detect escape key press
+            if (event && event.keyCode == 27) {
+                // detect if focused
+                if (self.selectedEvent) {
+                    // check if escape close for event menu is enabled
+                    if (self.settings.escCloseEventMenu) {
+                        // dismiss popover
+                        cancelEventSelection();
+                    }
+                }
+
+                // check if escape close for event menu is enabled
+                if (self.settings.escCloseAddMenu) {
+                    // detect if dates havve been selected
+                    if (self.selection && self.selection.length > 0) {
+                        cancelSelection();
+                    }
+                }
+            }
         };
 
         var handleEventClick = function handleEventClick(eventData, ev) {
