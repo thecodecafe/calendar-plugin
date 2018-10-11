@@ -938,8 +938,6 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
         };
 
         var pasteEvent = function pasteEvent() {
-            var _this = this;
-
             // get start and end
             var start = self.selection.length > 0 ? self.selection[0] : null;
             var end = self.selection.length > 1 ? self.selection[1] : start;
@@ -966,8 +964,6 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
                 alert('Event pasted to date successfully!');
                 refreshCalendarEvents();
             }).fail(function (err) {
-                // enable form
-                _this.disable(false);
                 // get and display error message
                 var message = 'Failed to paste event to date.';
                 var message = err.message && err.message.length > 0 ? err.message : message;

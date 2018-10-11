@@ -1079,8 +1079,6 @@
                 alert('Event pasted to date successfully!');
                 refreshCalendarEvents();
             }).fail((err) => {
-                // enable form
-                this.disable(false);
                 // get and display error message
                 var message = 'Failed to paste event to date.';
                 var message = err.message && err.message.length > 0 ? err.message : message;
