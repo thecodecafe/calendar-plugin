@@ -74,7 +74,8 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
         VIEWS_LIST_CONTAINER: PREFIX + '-view-list-container',
         VIEWS_LIST: PREFIX + '-view-list',
         VIEWS_ITEM: PREFIX + '-view',
-        VIEW_BUTTON: PREFIX + '-view-button'
+        VIEW_BUTTON: PREFIX + '-view-button',
+        SHOW_COPIED_EVENT_MENU: PREFIX + '-show-copied-menu'
 
         /**
          * here we have defined the names of the selector names
@@ -399,7 +400,11 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             if (self.settings.disableForm) {
                 return '';
             }
-            return "<div class='" + CLASSNAMES.ADD_MENU_CONTAINER + "' id='addMenuComponent'>" + "<div class='" + CLASSNAMES.ADD_MENU_INNER + "'>" + "<div class='" + CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER + "'>" + "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + "' type='button' data-action='add-event'>" + "Add Event</button>" + "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + " cancel' data-action='cancel' type='button'>" + "Cancel</button>" + "</div>" + "<span class='caret'></span>" + "</div>" + "</div>";
+            var copiedMenuClass = '';
+            if (self.copiedEvent) {
+                copiedMenuClass = CLASSNAMES.SHOW_COPIED_EVENT_MENU;
+            }
+            return ('\n                <div class=\'' + CLASSNAMES.ADD_MENU_CONTAINER + ' ' + copiedMenuClass + '\' id=\'addMenuComponent\'>\n                    <div class=\'' + CLASSNAMES.ADD_MENU_INNER + '\'>\n                        <div class=\'' + CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER + '\'>\n                            <button \n                                class=\'' + CLASSNAMES.ADD_MENU_BUTTON + ' anti-copied-button\' \n                                type=\'button\' data-action=\'add-event\'\n                            >\n                                Add Event\n                            </button>\n                            <button \n                                class=\'' + CLASSNAMES.ADD_MENU_BUTTON + ' copied-button\' \n                                type=\'button\' data-action=\'paste-event\'\n                            >\n                                Paste Event\n                            </button>\n                            <button \n                                class=\'' + CLASSNAMES.ADD_MENU_BUTTON + ' copied-button cancel\'\n                                data-action=\'cancel-copy\'\n                                type=\'button\'\n                            >\n                                Clear Copy\n                            </button>\n                            <button \n                                class=\'' + CLASSNAMES.ADD_MENU_BUTTON + ' destructive\'\n                                data-action=\'cancel\'\n                                type=\'button\'\n                            >\n                                Cancel\n                            </button>\n                        </div>\n                        <span class=\'caret\'></span>\n                    </div>\n                </div>\n            ').trim();
         };
 
         var renderEvents = function renderEvents() {
@@ -810,6 +815,19 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
             launch();
         };
 
+        var toggleCopiedEventMenu = function toggleCopiedEventMenu(hide) {
+            var CONTAINER = SELECTORS.CONTAINER,
+                ADD_MENU_CONTAINER = SELECTORS.ADD_MENU_CONTAINER;
+
+            var el = $(CONTAINER).find(ADD_MENU_CONTAINER);
+            if (!hide && el.length > 0 && !el.hasClass(CLASSNAMES.SHOW_COPIED_EVENT_MENU)) {
+                el.addClass(CLASSNAMES.SHOW_COPIED_EVENT_MENU);
+            }
+            if (hide && el.length > 0 && el.hasClass(CLASSNAMES.SHOW_COPIED_EVENT_MENU)) {
+                el.removeClass(CLASSNAMES.SHOW_COPIED_EVENT_MENU);
+            }
+        };
+
         var handleAddMenuButtonClick = function handleAddMenuButtonClick(ev) {
             // get required selectors
             var CONTAINER = SELECTORS.CONTAINER,
@@ -826,6 +844,14 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
                 case 'add-event':
                     // pop up modal
                     addEvent();
+                    break;
+                case 'paste-event':
+                    // cancel selection
+                    pasteEvent();
+                    break;
+                case 'cancel-copy':
+                    // cancel selection
+                    cancelEventCopy();
                     break;
                 case 'cancel':
                     // cancel selection
@@ -878,10 +904,13 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
         var copyEvent = function copyEvent(data) {
             // create new event data
-            var copyData = Object.assign({}, data);
+            self.copiedEvent = Object.assign({}, data);
+
+            // toggle copied event option on add menu
+            toggleCopiedEventMenu();
 
             // show modal
-            self.createFormModal.show(copyData);
+            // self.createFormModal.show(copyData);
         };
 
         var addEvent = function addEvent() {
@@ -906,6 +935,53 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
             // calcel selection
             cancelSelection();
+        };
+
+        var pasteEvent = function pasteEvent() {
+            var _this = this;
+
+            // get start and end
+            var start = self.selection.length > 0 ? self.selection[0] : null;
+            var end = self.selection.length > 1 ? self.selection[1] : start;
+            // only continue if start is not null
+            if (start == null) return;
+
+            // create start and end date
+            var startDate = new Date(start);
+            var endDate = new Date(end);
+
+            // create new event data
+            var data = Object.assign({}, self.copiedEvent, {
+                startDate: startDate.getMonth() + 1 + '/' + startDate.getDate() + '/' + startDate.getFullYear(),
+                endDate: endDate.getMonth() + 1 + '/' + endDate.getDate() + '/' + endDate.getFullYear()
+            }, self.settings.data || {});
+
+            // make ajax post request and try to save new event
+            $.ajax({
+                url: self.settings.createUrl || self.settings.url,
+                data: data,
+                headers: self.settings.headers,
+                method: 'POST'
+            }).done(function () {
+                alert('Event pasted to date successfully!');
+                refreshCalendarEvents();
+            }).fail(function (err) {
+                // enable form
+                _this.disable(false);
+                // get and display error message
+                var message = 'Failed to paste event to date.';
+                var message = err.message && err.message.length > 0 ? err.message : message;
+                alert(message);
+            });
+
+            // calcel selection
+            cancelSelection();
+            cancelEventCopy();
+        };
+
+        var cancelEventCopy = function cancelEventCopy() {
+            self.copiedEvent = undefined;
+            toggleCopiedEventMenu(true);
         };
 
         var cancelSelection = function cancelSelection() {
