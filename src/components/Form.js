@@ -28,6 +28,8 @@ class CPEventFormModal {
 
     PREFIX = 'cp-ef';
     fields = [];
+    dateTimeFields = [];
+    flatpickrs = null;
 
     constructor(uniqueID, options) {
         this.uniqueID = uniqueID;
@@ -55,6 +57,8 @@ class CPEventFormModal {
         this.modal = $(`#${this.uniqueID}`);
         // reset/set listeners
         this.listeners();
+        // enable datetime fields
+        this.enableDatetieFields();
     }
 
     render() {
@@ -83,17 +87,17 @@ class CPEventFormModal {
                     <div class="${this.PREFIX}-dialog">
                         <form action="javascript:;" class="${this.PREFIX}-form" method="POST">
                             <fieldset>
-                            ${ this.options.fieldsList.constructor == Array 
-                                    ? this.options.fieldsList.map((group, index) => this.renderFieldsList(group, index)).join('') 
-                                    : null
-                                }
+                            ${ this.options.fieldsList.constructor == Array
+                ? this.options.fieldsList.map((group, index) => this.renderFieldsList(group, index)).join('')
+                : null
+            }
                                 <div class="${this.PREFIX}-actions">
-                                    ${this.options.editting 
-                                        ? `<button type="button" 
+                                    ${this.options.editting
+                ? `<button type="button" 
                                             class="${this.PREFIX}-button delete"
                                         > Delete </button>`
-                                        : ""
-                                    }
+                : ""
+            }
                                     <button type="button" class="${this.PREFIX}-button ${this.CLASSNAMES().CANCEL}">Cancel</button>
                                     <button type="submit" class="${this.PREFIX}-button ${this.CLASSNAMES().SAVE}">Save</button>
                                 </div>
@@ -106,7 +110,7 @@ class CPEventFormModal {
     }
 
     renderFieldsList(group, index) {
-        if(group.constructor != Array ) return null;
+        if (group.constructor != Array) return null;
         let parent = `${this.uniqueID}${this.PREFIX}-group${index}`
         return `
             <div
@@ -120,31 +124,41 @@ class CPEventFormModal {
     makeField(field, parent, index) {
         let id = `${parent}${this.PREFIX}-group-item${index}`;
         let container = `#${id}`;
-        if(field && typeof field == 'object' && field.constructor == Object && Object.keys(field)){
+        let composition = null;
+        if (field && typeof field == 'object' && field.constructor == Object && Object.keys(field)) {
             // create field based on type
             switch (field.type) {
                 case 'text':
-                    this.fields.push( new CPFText(container, { ...field }) );
+                    composition = new CPFText(container, { ...field });
                     break;
                 case 'date':
-                    this.fields.push( new CPFDate(container, { ...field }) );
+                    composition = new CPFDate(container, { ...field });
+                    break;
+                case 'datetime':
+                    composition = new CPFDatetime(container, { ...field });
+                    this.dateTimeFields.push(composition);
                     break;
                 case 'select':
-                    this.fields.push( new CPFSelect(container, { ...field }) );
+                    composition = new CPFSelect(container, { ...field });
                     break;
                 case 'radio':
-                    this.fields.push( new CPFRadioGroup(container, { ...field }) );
+                    composition = new CPFRadioGroup(container, { ...field });
                     break;
                 case 'time':
-                    this.fields.push( new CPFTime(container, { ...field }) );
+                    composition = new CPFTime(container, { ...field });
                     break;
             }
         }
+
+        if (composition) {
+            this.fields.push(composition);
+        }
+
         return `<div class="${this.PREFIX}-group-item" id="${id}"></div>`;
     }
 
-    fieldHtmlType(type){
-        switch(type){
+    fieldHtmlType(type) {
+        switch (type) {
             case 'select':
                 return 'select';
             case 'long-text':
@@ -154,11 +168,11 @@ class CPEventFormModal {
         }
     }
 
-    renderFields(){
-        if(!this.fields || this.fields.constructor != Array){
+    renderFields() {
+        if (!this.fields || this.fields.constructor != Array) {
             return;
         }
-        for(var i = 0; i < this.fields.length; i++){
+        for (var i = 0; i < this.fields.length; i++) {
             this.fields[i].render();
         }
     }
@@ -174,6 +188,22 @@ class CPEventFormModal {
         // check for when for transition ends
         this.modal.find(FORM).off('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handleFormTransitionEnd.bind(this));
         this.modal.find(FORM).on('webkitTransitionEnd otransitionend oTransitionEnd msTransitionEnd transitionend', this.handleFormTransitionEnd.bind(this));
+    }
+
+    enableDatetieFields(){
+        if(this.dateTimeFields.length > 0 && flatpickr !== undefined){
+            this.flatpickrs = {};
+            for(var i = 0; i < this.dateTimeFields.length; i++){
+                let field = this.dateTimeFields[i];
+                this.flatpickrs[field.name] = $(field.containerSelector).find(field.fieldSelector).flatpickr({
+                    enableTime: true,
+                    altFormat: "F J, Y \\a\\t h:i K",
+                    altInput: true,
+                    dateFormat: "Y-m-d h:iK",
+                });
+            }
+                
+        }
     }
 
     handleButtonClick(ev) {
@@ -244,9 +274,17 @@ class CPEventFormModal {
         this.hideValidationError();
 
         // set the field values
-        for(var i = 0; i < this.fields.length; i++){
+        for (var i = 0; i < this.fields.length; i++) {
             field = this.fields[i];
-            if(data.hasOwnProperty(field.name)){
+            if( field['type'] == 'datetime' && 
+                this.flatpickrs && 
+                this.flatpickrs.constructor == Object && 
+                this.flatpickrs[field['name']]
+            ){
+                this.flatpickrs[field['name']].setDate(data[field.name], true);
+                continue;
+            }
+            if (data.hasOwnProperty(field.name)) {
                 field.setValue(data[field.name]);
             }
         }
@@ -316,7 +354,7 @@ class CPEventFormModal {
         errorContainer.text(error);
 
         // make error container visible if not visible
-        if (!errorContainer.hasClass(SHOW)){
+        if (!errorContainer.hasClass(SHOW)) {
             errorContainer.addClass(SHOW);
         }
     }
@@ -355,7 +393,7 @@ class CPEventFormModal {
 
     getFormData() {
         let data = {};
-        for(var i = 0; i < this.fields.length; i++){
+        for (var i = 0; i < this.fields.length; i++) {
             data[this.fields[i].name] = this.fields[i].getValue();
         }
         // get form values
@@ -484,9 +522,16 @@ class CPEventFormModal {
         return url;
     }
 
-    destroy(){
-        if(this.fields || this.fields.constructor == Array){
-            for(var i = 0; i < this.fields.length; i++){
+    destroy() {
+        if (this.fields || this.fields.constructor == Array) {
+            for (var i = 0; i < this.fields.length; i++) {
+                if( thie.field[i]['type'] == 'datetime' && 
+                    this.flatpickrs && 
+                    this.flatpickrs.constructor == Object,
+                    this.flatpickrs[thie.field[i]['name']]
+                ){
+                    this.flatpickrs[thie.field[i]['name']].destroy();
+                }
                 this.fields[i].destroy();
             }
         }

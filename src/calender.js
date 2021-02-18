@@ -74,6 +74,7 @@
         VIEWS_LIST: PREFIX + '-view-list',
         VIEWS_ITEM: PREFIX + '-view',
         VIEW_BUTTON: PREFIX + '-view-button',
+        SHOW_COPIED_EVENT_MENU: `${PREFIX}-show-copied-menu`
     }
 
     /**
@@ -486,17 +487,45 @@
             if (self.settings.disableForm) {
                 return '';
             }
-            return "<div class='" + CLASSNAMES.ADD_MENU_CONTAINER + "' id='addMenuComponent'>" +
-                "<div class='" + CLASSNAMES.ADD_MENU_INNER + "'>" +
-                "<div class='" + CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER + "'>" +
-                "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + "' type='button' data-action='add-event'>" +
-                "Add Event</button>" +
-                "<button class='" + CLASSNAMES.ADD_MENU_BUTTON + " cancel' data-action='cancel' type='button'>" +
-                "Cancel</button>" +
-                "</div>" +
-                "<span class='caret'></span>" +
-                "</div>" +
-                "</div>";
+            let copiedMenuClass = '';
+            if (self.copiedEvent) {
+                copiedMenuClass = CLASSNAMES.SHOW_COPIED_EVENT_MENU;
+            }
+            return `
+                <div class='${CLASSNAMES.ADD_MENU_CONTAINER} ${copiedMenuClass}' id='addMenuComponent'>
+                    <div class='${CLASSNAMES.ADD_MENU_INNER}'>
+                        <div class='${CLASSNAMES.ADD_MENU_BUTTONS_CONTAINER}'>
+                            <button 
+                                class='${CLASSNAMES.ADD_MENU_BUTTON} anti-copied-button' 
+                                type='button' data-action='add-event'
+                            >
+                                Add Event
+                            </button>
+                            <button 
+                                class='${CLASSNAMES.ADD_MENU_BUTTON} copied-button' 
+                                type='button' data-action='paste-event'
+                            >
+                                Paste Event
+                            </button>
+                            <button 
+                                class='${CLASSNAMES.ADD_MENU_BUTTON} copied-button cancel'
+                                data-action='cancel-copy'
+                                type='button'
+                            >
+                                Clear Copy
+                            </button>
+                            <button 
+                                class='${CLASSNAMES.ADD_MENU_BUTTON} destructive'
+                                data-action='cancel'
+                                type='button'
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                        <span class='caret'></span>
+                    </div>
+                </div>
+            `.trim();
         }
 
         const renderEvents = function () {
@@ -904,6 +933,17 @@
             launch();
         }
 
+        const toggleCopiedEventMenu = function (hide) {
+            let { CONTAINER, ADD_MENU_CONTAINER } = SELECTORS;
+            let el = $(CONTAINER).find(ADD_MENU_CONTAINER);
+            if (!hide && el.length > 0 && !el.hasClass(CLASSNAMES.SHOW_COPIED_EVENT_MENU)) {
+                el.addClass(CLASSNAMES.SHOW_COPIED_EVENT_MENU);
+            }
+            if (hide && el.length > 0 && el.hasClass(CLASSNAMES.SHOW_COPIED_EVENT_MENU)) {
+                el.removeClass(CLASSNAMES.SHOW_COPIED_EVENT_MENU);
+            }
+        }
+
         const handleAddMenuButtonClick = function (ev) {
             // get required selectors
             var { CONTAINER, ADD_MENU_BUTTON } = SELECTORS;
@@ -918,6 +958,14 @@
                 case 'add-event':
                     // pop up modal
                     addEvent();
+                    break;
+                case 'paste-event':
+                    // cancel selection
+                    pasteEvent();
+                    break;
+                case 'cancel-copy':
+                    // cancel selection
+                    cancelEventCopy();
                     break;
                 case 'cancel':
                     // cancel selection
@@ -971,10 +1019,13 @@
 
         const copyEvent = function (data) {
             // create new event data
-            let copyData = Object.assign({}, data);
+            self.copiedEvent = Object.assign({}, data);
+
+            // toggle copied event option on add menu
+            toggleCopiedEventMenu();
 
             // show modal
-            self.createFormModal.show(copyData);
+            // self.createFormModal.show(copyData);
         }
 
         const addEvent = function () {
@@ -999,6 +1050,49 @@
 
             // calcel selection
             cancelSelection();
+        }
+
+        const pasteEvent = function () {
+            // get start and end
+            var start = self.selection.length > 0 ? self.selection[0] : null;
+            var end = self.selection.length > 1 ? self.selection[1] : start;
+            // only continue if start is not null
+            if (start == null) return;
+
+            // create start and end date
+            var startDate = new Date(start);
+            var endDate = new Date(end);
+
+            // create new event data
+            var data = Object.assign({}, self.copiedEvent, {
+                startDate: `${startDate.getMonth() + 1}/${startDate.getDate()}/${startDate.getFullYear()}`,
+                endDate: `${endDate.getMonth() + 1}/${endDate.getDate()}/${endDate.getFullYear()}`,
+            }, self.settings.data || {});
+
+            // make ajax post request and try to save new event
+            $.ajax({
+                url: self.settings.createUrl || self.settings.url,
+                data: data,
+                headers: self.settings.headers,
+                method: 'POST'
+            }).done(() => {
+                alert('Event pasted to date successfully!');
+                refreshCalendarEvents();
+            }).fail((err) => {
+                // get and display error message
+                var message = 'Failed to paste event to date.';
+                var message = err.message && err.message.length > 0 ? err.message : message;
+                alert(message);
+            });
+
+            // calcel selection
+            cancelSelection();
+            cancelEventCopy();
+        }
+
+        const cancelEventCopy = function () {
+            self.copiedEvent = undefined;
+            toggleCopiedEventMenu(true);
         }
 
         const cancelSelection = function () {
@@ -1027,11 +1121,11 @@
 
                 // check if escape close for event menu is enabled
                 if (self.settings.escCloseAddMenu) {
-                     // detect if dates havve been selected
-                     if (self.selection && self.selection.length > 0) {
-                         cancelSelection();
-                     }
-                 }
+                    // detect if dates havve been selected
+                    if (self.selection && self.selection.length > 0) {
+                        cancelSelection();
+                    }
+                }
             }
         }
 
